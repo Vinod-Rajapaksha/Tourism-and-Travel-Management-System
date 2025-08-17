@@ -16,6 +16,7 @@ public class JwtService {
 
     public String generateToken(String email, String role) {
         return Jwts.builder()
+                .setId(java.util.UUID.randomUUID().toString())
                 .setSubject(email)
                 .claim("role", role)
                 .setIssuedAt(new Date())
