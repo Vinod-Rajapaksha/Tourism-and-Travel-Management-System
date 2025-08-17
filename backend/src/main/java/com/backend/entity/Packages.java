@@ -10,40 +10,40 @@ import java.util.List;
 @Table(name = "Packages", indexes = {
         @Index(name = "IX_Packages_Status", columnList = "status")
 })
-public class Package {
+public class Packages {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long packageID;
 
-    @Column(name = "image", length = 300)
+    @Column(name = "image")
     private String image;
 
-    @Column(name = "title", length = 150, nullable = false)
+    @Column(name = "title")
     private String title;
 
-    @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "description")
     private String description;
 
-    @Column(name = "price", precision = 10, scale = 2, nullable = false)
+    @Column(name = "price")
     private BigDecimal price;
 
-    @Column(name = "offer", precision = 5, scale = 2)
+    @Column(name = "offer")
     private BigDecimal offer;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 16, nullable = false)
+    @Column(name = "status")
     private PackageStatus status;
 
-    @Column(name = "createdAt", nullable = false)
+    @Column(name = "createdAt")
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "tourPackage")
+    @OneToMany(mappedBy = "Packages")
     private List<Reservation> reservations;
 
-    @OneToMany(mappedBy = "tourPackage")
+    @OneToMany(mappedBy = "Packages")
     private List<Payment> payments;
 
-    @OneToMany(mappedBy = "tourPackage")
+    @OneToMany(mappedBy = "Packages")
     private List<Feedback> feedbacks;
 
 }
