@@ -1,6 +1,6 @@
 package com.backend.controller;
 
-import com.backend.dto.LoginRequest;
+import com.backend.dto.LoginRequestDTO;
 import com.backend.entity.Admin;
 import com.backend.repository.AdminRepository;
 import com.backend.service.JwtService;
@@ -22,7 +22,7 @@ public class AuthController {
     private final JwtService jwtService;
 
     @PostMapping("/admin/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest login) {
+    public ResponseEntity<?> login(@RequestBody LoginRequestDTO login) {
         Admin admin = adminRepo.findByEmail(login.getEmail())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email"));
 
