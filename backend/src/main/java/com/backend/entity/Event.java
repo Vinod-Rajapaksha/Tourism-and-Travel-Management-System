@@ -11,16 +11,16 @@ public class Event {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long eventID;
 
-    @Column(name = "title", length = 150, nullable = false)
+    @Column(name = "title")
     private String title;
 
-    @Column(name = "date", nullable = false)
+    @Column(name = "date")
     private LocalDate date;
 
-    @Column(name = "details", length = 1000)
+    @Column(name = "details")
     private String details;
 
-    @Column(name = "createdAt", nullable = false)
+    @Column(name = "createdAt")
     private LocalDateTime createdAt;
 
 }
