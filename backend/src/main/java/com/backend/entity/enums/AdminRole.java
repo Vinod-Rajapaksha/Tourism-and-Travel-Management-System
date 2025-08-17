@@ -1,0 +1,5 @@
+package com.backend.entity.enums;
+
+public enum AdminRole {
+    GENERAL_MANAGER, SENIOR_TRAVEL_CONSULTANT, CUSTOMER_SERVICE_EXECUTIVE, MARKETING_MANAGER, ADMIN
+}
