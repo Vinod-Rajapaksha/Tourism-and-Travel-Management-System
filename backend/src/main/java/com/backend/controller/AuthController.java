@@ -26,7 +26,7 @@ public class AuthController {
         Admin admin = adminRepo.findByEmail(login.getEmail())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email"));
 
-        if (!passwordEncoder.matches(login.getPassword(), admin.getPasswordHash())) {
+        if (!passwordEncoder.matches(login.getPassword(), admin.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid password");
         }
 
