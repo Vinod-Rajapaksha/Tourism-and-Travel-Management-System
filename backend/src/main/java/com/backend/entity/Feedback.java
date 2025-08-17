@@ -11,20 +11,20 @@ public class Feedback {
     private Long feedbackID;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "userID", nullable = false)
+    @JoinColumn(name = "userID")
     private Client client;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "packageID", nullable = false)
-    private Package Package;
+    @JoinColumn(name = "packageID")
+    private Packages Packages;
 
-    @Column(name = "rating", nullable = false)
-    private Short rating; // 1..5 (TinyInt)
+    @Column(name = "rating")
+    private Short rating;
 
-    @Column(name = "comment", length = 1000)
+    @Column(name = "comment")
     private String comment;
 
-    @Column(name = "submittedAt", nullable = false)
+    @Column(name = "submittedAt")
     private LocalDateTime submittedAt;
 
 }

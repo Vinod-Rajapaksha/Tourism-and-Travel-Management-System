@@ -17,12 +17,12 @@ public class Reservation {
     private Long reservationID;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "userID", nullable = false)
+    @JoinColumn(name = "userID")
     private Client client;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "packageID", nullable = false)
-    private Package tourPackage;
+    @JoinColumn(name = "packageID")
+    private Packages Packages;
 
     @ManyToOne
     @JoinColumn(name = "guideID")
@@ -30,19 +30,19 @@ public class Reservation {
 
     @OneToOne
     @JoinColumn(name = "paymentID")
-    private Payment payment; // nullable; DB has ON DELETE SET NULL
+    private Payment payment;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 16, nullable = false)
+    @Column(name = "status")
     private ReservationStatus status;
 
-    @Column(name = "startDate", nullable = false)
+    @Column(name = "startDate")
     private LocalDate startDate;
 
-    @Column(name = "endDate", nullable = false)
+    @Column(name = "endDate")
     private LocalDate endDate;
 
-    @Column(name = "createdAt", nullable = false)
+    @Column(name = "createdAt")
     private LocalDateTime createdAt;
 
 }

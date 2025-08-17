@@ -13,20 +13,20 @@ public class Refund {
     private Long refundID;
 
     @OneToOne(optional = false)
-    @JoinColumn(name = "paymentID", nullable = false)
+    @JoinColumn(name = "paymentID")
     private Payment payment;
 
-    @Column(name = "amount", precision = 10, scale = 2, nullable = false)
+    @Column(name = "amount")
     private BigDecimal amount;
 
-    @Column(name = "reason", length = 255)
+    @Column(name = "reason")
     private String reason;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 16, nullable = false)
+    @Column(name = "status")
     private RefundStatus status;
 
-    @Column(name = "createdAt", nullable = false)
+    @Column(name = "createdAt")
     private LocalDateTime createdAt;
 
 }

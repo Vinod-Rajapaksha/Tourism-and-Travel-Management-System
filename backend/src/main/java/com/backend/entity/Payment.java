@@ -16,21 +16,21 @@ public class Payment {
     private Long paymentID;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "userID", nullable = false)
+    @JoinColumn(name = "userID")
     private Client client;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "packageID", nullable = false)
-    private Package tourPackage;
+    @JoinColumn(name = "packageID")
+    private Packages Packages;
 
-    @Column(name = "amount", precision = 10, scale = 2, nullable = false)
+    @Column(name = "amount")
     private BigDecimal amount;
 
-    @Column(name = "paymentDate", nullable = false)
+    @Column(name = "paymentDate")
     private LocalDateTime paymentDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 16, nullable = false)
+    @Column(name = "status")
     private PaymentStatus status;
 
     @OneToOne(mappedBy = "payment")
