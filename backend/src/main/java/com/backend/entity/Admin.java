@@ -20,9 +20,7 @@ public class Admin {
 
     @Column(unique = true)
     private String email;
-
-    @Column(name = "password", nullable = false)
-    private String passwordHash;
+    private String password;
     private String phone;
     private LocalDateTime createdAt = LocalDateTime.now();
 }
