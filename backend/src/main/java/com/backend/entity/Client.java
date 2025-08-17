@@ -14,29 +14,29 @@ public class Client {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userID;
 
-    @Column(name = "fName", length = 100, nullable = false)
+    @Column(name = "fName")
     private String firstName;
 
-    @Column(name = "lName", length = 100, nullable = false)
+    @Column(name = "lName")
     private String lastName;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "gender", length = 16)
+    @Column(name = "gender")
     private Gender gender;
 
-    @Column(name = "NIC", length = 20, unique = true)
+    @Column(name = "NIC", unique = true)
     private String nic;
 
-    @Column(name = "email", length = 255, nullable = false, unique = true)
+    @Column(name = "email", unique = true)
     private String email;
 
-    @Column(name = "password", length = 255, nullable = false)
+    @Column(name = "password")
     private String password;
 
-    @Column(name = "phone", length = 20)
+    @Column(name = "phone")
     private String phone;
 
-    @Column(name = "createdAt", nullable = false)
+    @Column(name = "createdAt")
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "client")
