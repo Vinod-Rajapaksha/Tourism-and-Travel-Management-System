@@ -31,10 +31,10 @@ export function AuthProvider({ children }) {
     loading,
     isAuthenticated: !!user && !!token,
     async login(credentials) {
-      const { Token } = await loginApi(credentials);
-      setToken(Token);
-      setItem("token", Token);
-      const { email, roles: [role] } = await getProfile(Token);
+      const { token } = await loginApi(credentials);
+      setToken(token);
+      setItem("token", token);
+      const { email, role } = await getProfile(token);
       setUser({ email, roles: [role] });
 
     },
