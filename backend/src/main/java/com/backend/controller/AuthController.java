@@ -6,10 +6,13 @@ import com.backend.repository.AdminRepository;
 import com.backend.service.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -32,5 +35,23 @@ public class AuthController {
 
         String token = jwtService.generateToken(admin.getEmail(), admin.getRole());
         return ResponseEntity.ok(Map.of("token", token,"email", admin.getEmail(),"role", admin.getRole()));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> me(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Not logged in");
+        }
+
+        String email = authentication.getName();
+        List<String> roles = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
+
+        return ResponseEntity.ok(Map.of(
+                "email", email,
+                "roles", roles,
+                "fName", authentication.getName()
+        ));
     }
 }
