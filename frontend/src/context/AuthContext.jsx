@@ -11,7 +11,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     async function bootstrap() {
-      if (!token) return;
+      if (!token || !token.includes('.')) return;
       try {
         const me = await getProfile(token);
         setUser(me);
