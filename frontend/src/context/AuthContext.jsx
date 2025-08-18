@@ -33,7 +33,7 @@ export function AuthProvider({ children }) {
     async login(credentials) {
       const { Token } = await loginApi(credentials);
       setToken(Token);
-      setItem("token", token);
+      setItem("token", Token);
       const { email, roles: [role] } = await getProfile(Token);
       setUser({ email, roles: [role] });
 
