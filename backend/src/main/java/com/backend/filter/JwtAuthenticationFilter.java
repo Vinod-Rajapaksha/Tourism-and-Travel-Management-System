@@ -32,22 +32,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String token = authHeader.substring(7);
-        Claims claims = jwtService.validateToken(token);
-        String email = claims.getSubject();
-        String role = claims.get("role", String.class);
 
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(email, null,
-                        AuthorityUtils.createAuthorityList("ROLE_" + role));
-        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        try {
+            Claims claims = jwtService.validateToken(token);
+            String email = claims.getSubject();
+            String role = claims.get("role", String.class);
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(email, null,
+                            AuthorityUtils.createAuthorityList("ROLE_" + role));
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        } catch (Exception e) {
+            System.err.println("JWT validation failed: " + e.getMessage());
+        }
+
         filterChain.doFilter(request, response);
     }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return path.startsWith("/api/auth"); // skip login,me
+        return path.startsWith("/api/auth/admin/login"); // skip login
     }
 }
