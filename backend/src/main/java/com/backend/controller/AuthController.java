@@ -34,7 +34,7 @@ public class AuthController {
         }
 
         String token = jwtService.generateToken(admin.getEmail(), admin.getRole());
-        return ResponseEntity.ok(Map.of("token", token,"email", admin.getEmail(),"role", admin.getRole()));
+        return ResponseEntity.ok(Map.of("token", token, "email", admin.getEmail(), "role", admin.getRole()));
     }
 
     @GetMapping("/me")
@@ -46,12 +46,12 @@ public class AuthController {
         String email = authentication.getName();
         List<String> roles = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
+                .map(r -> r.startsWith("ROLE_") ? r.substring(5) : r)
                 .toList();
 
         return ResponseEntity.ok(Map.of(
                 "email", email,
                 "roles", roles,
-                "fName", authentication.getName()
-        ));
+                "fName", authentication.getName()));
     }
 }
