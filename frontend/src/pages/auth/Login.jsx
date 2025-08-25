@@ -100,7 +100,7 @@ export default function Login() {
                   <label id="password-label" htmlFor="password">Password</label>
 
                   <i
-                    className={`icon-right fas ${showPwd ? "fa-eye-slash" : "fa-eye"} password-toggle`}
+                    className={`icon-right fas ${showPwd ? "fa-eye" : "fa-eye-slash"} password-toggle`}
                     id="show-password"
                     role="button"
                     aria-label={showPwd ? "Hide password" : "Show password"}
