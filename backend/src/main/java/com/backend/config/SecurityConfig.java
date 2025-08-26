@@ -24,7 +24,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(c -> {})
+                .cors(c -> {
+                })
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
 
@@ -33,13 +34,16 @@ public class SecurityConfig {
                         .requestMatchers("/api/customer-service/**").hasRole("CUSTOMER_SERVICE_EXECUTIVE")
                         .requestMatchers("/api/marketing/**").hasRole("MARKETING_MANAGER")
 
+                        .requestMatchers("/api/admin/**").hasAnyRole(
+                                "GENERAL_MANAGER",
+                                "SENIOR_TRAVEL_CONSULTANT",
+                                "CUSTOMER_SERVICE_EXECUTIVE",
+                                "MARKETING_MANAGER")
 
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
 
                 .sessionManagement(sess -> sess
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -60,8 +64,8 @@ public class SecurityConfig {
     org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
         var cfg = new org.springframework.web.cors.CorsConfiguration();
         cfg.setAllowedOrigins(java.util.List.of("http://localhost:3000"));
-        cfg.setAllowedMethods(java.util.List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
-        cfg.setAllowedHeaders(java.util.List.of("Authorization","Content-Type"));
+        cfg.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        cfg.setAllowedHeaders(java.util.List.of("Authorization", "Content-Type"));
         var source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", cfg);
         return source;
