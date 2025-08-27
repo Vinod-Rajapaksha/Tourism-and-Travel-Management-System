@@ -16,8 +16,8 @@ import ReservationDetails from "./pages/reservation/Details";
 import ClientList from "./pages/client/List";
 import ClientDetails from "./pages/client/Details";
 
-import AdminProfile from "./pages/AdminProfile";
-import EditProfile from "./pages/EditProfile";
+import AdminProfile from "./pages/adminprofile/AdminProfile";
+import EditProfile from "./pages/adminprofile/EditProfile";
 
 import BaseLayout from "./layouts/BaseLayout";
 import RoleBasedDashboardRedirect from "./components/RoleBasedDashboardRedirect";

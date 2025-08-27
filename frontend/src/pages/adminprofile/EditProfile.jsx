@@ -2,8 +2,8 @@ import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
-import profileSvg from "../assets/img/undraw_profile.svg";
-import "../assets/admin.css";
+import profileSvg from "../../assets/img/undraw_profile.svg";
+import "../../assets/admin.css";
 
 const API_BASE ="http://localhost:8080";
 
