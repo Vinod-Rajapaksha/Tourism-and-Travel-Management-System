@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
@@ -20,6 +21,7 @@ public class AdminProfileController {
 
     private final AdminRepository adminRepository;
     private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
 
     @GetMapping("/profile")
     public ResponseEntity<AdminProfileDto> getProfile(HttpServletRequest request) {
@@ -66,7 +68,8 @@ public class AdminProfileController {
         admin.setFName(updateDto.getFName());
         admin.setLName(updateDto.getLName());
         admin.setPhone(updateDto.getPhone());
-        admin.setPassword(updateDto.getPassword());
+        admin.setEmail(updateDto.getEmail());
+        admin.setPassword(passwordEncoder.encode(updateDto.getPassword()));
         adminRepository.save(admin);
 
         return ResponseEntity.ok().build();
