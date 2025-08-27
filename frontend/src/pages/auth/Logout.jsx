@@ -1,8 +1,18 @@
 import { useEffect } from "react";
-import useAuth from "../../hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function Logout() {
   const { logout } = useAuth();
-  useEffect(() => { logout(); }, [logout]);
-  return <div className="text-center py-5">You have been signed out.</div>;
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    (async () => {
+      try {
+        await logout();    
+      } finally {
+        navigate("/login", { replace: true });
+      }
+    })();
+  }, [logout, navigate]);
 }
