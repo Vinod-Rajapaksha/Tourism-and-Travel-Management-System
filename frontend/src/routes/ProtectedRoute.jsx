@@ -1,9 +1,9 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { Spinner } from "react-bootstrap";
-import useAuth from "../hooks/useAuth";
+import { useAuth } from "../hooks/useAuth";
 
 export default function ProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useAuth();
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -13,7 +13,6 @@ export default function ProtectedRoute({ children }) {
     );
   }
 
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-
-  return children ?? <Outlet />;
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
 }
