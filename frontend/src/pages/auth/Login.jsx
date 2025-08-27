@@ -1,7 +1,7 @@
 import React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import useAuth from "../../hooks/useAuth";
+import { useAuth } from "../../hooks/useAuth";
 import "../../assets/main.css";
 
 export default function Login() {
@@ -109,7 +109,7 @@ export default function Login() {
                   <i className="icon fas fa-lock" aria-hidden />
                 </div>
 
-                <button type="submit" className="btn mt-5" disabled={loading}>
+                <button type="submit" className="btn1 mt-5" disabled={loading}>
                   {loading ? "Signing in..." : "Login"}
                 </button>
               </form>
