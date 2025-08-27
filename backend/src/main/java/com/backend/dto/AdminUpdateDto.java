@@ -11,5 +11,6 @@ public class AdminUpdateDto {
     private String fName;
     private String lName;
     private String phone;
+    private String email;
     private String password;
 }
