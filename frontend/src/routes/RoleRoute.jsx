@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { Spinner } from "react-bootstrap";
-import useAuth from "../hooks/useAuth";
+import { useAuth } from "../hooks/useAuth";
 
 export default function RoleRoute({ roles, children }) {
   const { user, loading } = useAuth();
@@ -15,6 +15,9 @@ export default function RoleRoute({ roles, children }) {
 
   if (!user) return <Navigate to="/login" replace />;
 
-  const hasRole = roles.some((r) => user.roles?.includes(r));
-  return hasRole ? children : <Navigate to="/dashboard" replace />;
+  if (!roles.length) return children;
+
+  const userRoles = user?.roles || [];
+  const allowed = roles.some((r) => userRoles.includes(r));
+  return allowed ? children : <Navigate to="/dashboard" replace />;
 }
