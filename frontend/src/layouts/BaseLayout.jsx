@@ -93,7 +93,7 @@ export default function BaseLayout() {
           onToggleSidebar={toggleSidebar}
           onLogout={() => window.location.assign("/logout")}
         />
-        <main className="p-3 flex-grow-1">
+        <main className="p-3 flex-grow-1 scrollable">
           <Outlet />
         </main>
       </div>
