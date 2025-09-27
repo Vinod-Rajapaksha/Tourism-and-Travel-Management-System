@@ -38,6 +38,7 @@ public class AdminProfileController {
             return ResponseEntity.notFound().build();
 
         Admin admin = adminOpt.get();
+        String masked = "********";
         AdminProfileDto dto = new AdminProfileDto(
                 admin.getAdminID(),
                 admin.getFName(),
@@ -45,7 +46,8 @@ public class AdminProfileController {
                 admin.getRole(),
                 admin.getEmail(),
                 admin.getPhone(),
-                admin.getCreatedAt());
+                admin.getCreatedAt(),
+                masked);
         return ResponseEntity.ok(dto);
     }
 
@@ -69,7 +71,9 @@ public class AdminProfileController {
         admin.setLName(updateDto.getLName());
         admin.setPhone(updateDto.getPhone());
         admin.setEmail(updateDto.getEmail());
-        admin.setPassword(passwordEncoder.encode(updateDto.getPassword()));
+        if (updateDto.getPassword() != null && !updateDto.getPassword().isBlank()) {
+            admin.setPassword(passwordEncoder.encode(updateDto.getPassword()));
+        }
         adminRepository.save(admin);
 
         return ResponseEntity.ok().build();
