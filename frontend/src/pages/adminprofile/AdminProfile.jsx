@@ -115,7 +115,7 @@ const AdminProfile = () => {
           <ProfileField icon="fas fa-user-circle" label="Role" value={profile.role} />
           <ProfileField icon="fas fa-phone" label="Phone" value={profile.phone} />
           <ProfileField icon="fas fa-envelope" label="Email" value={profile.email} />
-          <ProfileField icon="fas fa-lock" label="Password" type="password" name="password" value={profile.password} />
+          <ProfileField icon="fas fa-lock" label="Password" type="password" name="password" value={profile.passwordMasked} />
         </div>
 
         <button className="btn btn-danger delete-btn mt-3" onClick={handleDelete}>
