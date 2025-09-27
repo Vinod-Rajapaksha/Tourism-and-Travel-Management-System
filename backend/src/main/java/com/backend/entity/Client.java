@@ -2,6 +2,10 @@ package com.backend.entity;
 
 import com.backend.entity.enums.Gender;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -9,9 +13,13 @@ import java.util.List;
 @Table(name = "Client", indexes = {
         @Index(name = "IX_User_Email", columnList = "email")
 })
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Client {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userID;
 
     @Column(name = "fName")
