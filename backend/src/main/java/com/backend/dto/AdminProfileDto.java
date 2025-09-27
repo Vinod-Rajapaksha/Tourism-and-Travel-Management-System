@@ -14,6 +14,5 @@ public class AdminProfileDto {
     private String email;
     private String phone;
     private LocalDateTime createdAt;
+    private String passwordMasked;
 }
-
-
