@@ -7,7 +7,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.*;
-import org.springframework.security.core.*;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -38,9 +37,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String email = claims.getSubject();
             String role = claims.get("role", String.class);
 
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(email, null,
-                            AuthorityUtils.createAuthorityList("ROLE_" + role));
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(email, null,
+                    AuthorityUtils.createAuthorityList("ROLE_" + role));
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
         } catch (Exception e) {
@@ -53,6 +51,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return path.startsWith("/api/auth/admin/login"); // skip login
+        return path.startsWith("/api/auth/admin/login");
     }
 }
