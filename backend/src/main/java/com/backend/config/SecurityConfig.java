@@ -40,6 +40,8 @@ public class SecurityConfig {
                                 "CUSTOMER_SERVICE_EXECUTIVE",
                                 "MARKETING_MANAGER")
 
+                        .requestMatchers("/api/clients/**").permitAll()
+
                         .anyRequest().authenticated())
 
                 .sessionManagement(sess -> sess
