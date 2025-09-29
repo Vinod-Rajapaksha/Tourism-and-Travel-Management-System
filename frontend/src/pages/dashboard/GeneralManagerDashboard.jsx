@@ -184,7 +184,7 @@ export default function AnalyticsDashboard() {
     finally { setLoading(false); }
   }
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [months]);
+  useEffect(() => { load();}, [months]);
 
   const series = useMemo(() => (data?.earningSeries ?? []).map((d) => ({ month: d.monthLabel, value: d.value })), [data]);
 
@@ -203,8 +203,14 @@ export default function AnalyticsDashboard() {
             <option value={9}>Last 9 months</option>
             <option value={12}>Last 12 months</option>
           </select>
-          <button className="btn btn-sm btn-outline-secondary" onClick={load}><i className="bi bi-arrow-repeat me-1" /> Refresh</button>
-        </div>
+          <button 
+            className="btn btn-outline-primary"
+            onClick={load}
+            disabled={loading}
+            >
+              <i className={`fas fa-sync-alt ${loading ? 'fa-spin' : ''}`}></i>
+          </button>
+          </div>
       </div>
 
       {error && <div className="alert alert-danger d-flex align-items-center" role="alert"><i className="bi bi-exclamation-triangle-fill me-2" />{error}</div>}
