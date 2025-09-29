@@ -1,7 +1,10 @@
+import React, { useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import AuthLayout from "./layouts/AuthLayout";
 import Login from "./pages/auth/Login";
 import Logout from "./pages/auth/Logout";
+
+import TravelLoader from "./components/Loading";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
 import RoleRoute from "./routes/RoleRoute";
@@ -11,10 +14,8 @@ import SeniorTravelConsultantDashboard from "./pages/dashboard/SeniorTravelConsu
 import CustomerServiceExecutiveDashboard from "./pages/dashboard/CustomerServiceExecutiveDashboard";
 import MarketingManagerDashboard from "./pages/dashboard/MarketingManagerDashboard";
 
-import ReservationList from "./pages/reservation/List";
-import ReservationDetails from "./pages/reservation/Details";
-import ClientList from "./pages/client/List";
-import ClientDetails from "./pages/client/Details";
+import UserManagement from "./pages/usermanagement/UserManagement";
+import AdminManagement from "./pages/adminmanagement/AdminManagement";
 
 import AdminProfile from "./pages/adminprofile/AdminProfile";
 import EditProfile from "./pages/adminprofile/EditProfile";
@@ -25,6 +26,14 @@ import RoleBasedDashboardRedirect from "./components/RoleBasedDashboardRedirect"
 import "./App.css";
 
 function App() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) return <TravelLoader />;
   return (
     <Routes>
       {/* Redirect root to login */}
@@ -81,12 +90,10 @@ function App() {
             </RoleRoute>
           }
         />
-
-        {/* Reservation + Client */}
-        <Route path="reservation" element={<ReservationList />} />
-        <Route path="reservation/:id" element={<ReservationDetails />} />
-        <Route path="customers" element={<ClientList />} />
-        <Route path="customers/:id" element={<ClientDetails />} />
+        
+        {/* Management */}
+        <Route path="/users" element={<UserManagement />} />
+        <Route path="/admins" element={<AdminManagement />} />
 
         {/* Profile */}
         <Route path="profile" element={<AdminProfile />} />
