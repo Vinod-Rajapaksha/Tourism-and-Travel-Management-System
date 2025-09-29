@@ -40,7 +40,9 @@ public class SecurityConfig {
                                 "CUSTOMER_SERVICE_EXECUTIVE",
                                 "MARKETING_MANAGER")
 
-                        .requestMatchers("/api/clients/**").permitAll()
+                        .requestMatchers("/api/clients/**").hasRole("GENERAL_MANAGER")
+
+                        .requestMatchers("/api/adminmanagement/**").hasRole("GENERAL_MANAGER")
 
                         .anyRequest().authenticated())
 
