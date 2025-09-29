@@ -25,10 +25,4 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
                      OR LOWER(c.nic) LIKE LOWER(CONCAT('%', :q, '%')))
             """)
     Page<Client> search(@Param("q") String q, Pageable pageable);
-
-    @Query("SELECT COUNT(r) FROM Reservation r WHERE r.client.userID = :clientId")
-    long countReservations(@Param("clientId") Long clientId);
-
-    @Query("SELECT COUNT(p) FROM Payment p WHERE p.client.userID = :clientId")
-    long countPayments(@Param("clientId") Long clientId);
 }
