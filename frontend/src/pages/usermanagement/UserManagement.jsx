@@ -6,6 +6,7 @@ import {
   deleteClient,
   changePassword,
 } from "../../api/Client";
+import Swal from "sweetalert2";
 
 const emptyForm = {
   firstName: "",
@@ -17,7 +18,137 @@ const emptyForm = {
   phone: "",
 };
 
-export default function ClientsPage() {
+// Modern Avatar Component
+const UserAvatar = ({ name, size = "md" }) => {
+  const sizes = { sm: "32px", md: "40px", lg: "48px" };
+  const initials = name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';
+  const colors = ['#2F80ED', '#27AE60', '#F2994A', '#9B51E0', '#EB5757'];
+  const color = colors[name?.length % colors.length] || '#6c757d';
+
+  return (
+    <div 
+      className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
+      style={{ 
+        width: sizes[size], 
+        height: sizes[size], 
+        backgroundColor: color,
+        fontSize: size === 'sm' ? '12px' : '14px'
+      }}
+    >
+      {initials}
+    </div>
+  );
+};
+
+// Modern Action Buttons
+const ActionButtons = ({ onEdit, onChangePassword, onDelete, itemId }) => (
+  <div className="d-flex gap-1">
+    <button
+      className="btn btn-icon btn-sm btn-outline-primary rounded-circle"
+      onClick={() => onEdit(itemId)}
+      title="Edit"
+    >
+      <i className="fas fa-edit fa-xs" />
+    </button>
+    <button
+      className="btn btn-icon btn-sm btn-outline-warning rounded-circle"
+      onClick={() => onChangePassword(itemId)}
+      title="Change Password"
+    >
+      <i className="fas fa-key fa-xs" />
+    </button>
+    <button
+      className="btn btn-icon btn-sm btn-outline-danger rounded-circle"
+      onClick={() => onDelete(itemId)}
+      title="Delete"
+    >
+      <i className="fas fa-trash fa-xs" />
+    </button>
+  </div>
+);
+
+// Modern Card Component
+const ModernCard = ({ children, className = "" }) => (
+  <div className={`card modern-card border-0 shadow-sm ${className}`}>
+    {children}
+  </div>
+);
+
+// Modern Modal Component
+const ModernModal = ({ show, onClose, title, children, size = "md" }) => {
+  if (!show) return null;
+  
+  const sizeClass = {
+    sm: "modal-sm",
+    md: "",
+    lg: "modal-lg",
+    xl: "modal-xl"
+  }[size];
+
+  return (
+    <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+      <div className={`modal-dialog modal-dialog-centered ${sizeClass}`}>
+        <div className="modal-content modern-modal border-0 shadow-lg">
+          <div className="modal-header bg-primary text-white border-0">
+            <h5 className="modal-title fw-semibold">
+              {title}
+            </h5>
+            <button
+              type="button"
+              className="btn-close btn-close-white"
+              onClick={onClose}
+            />
+          </div>
+          <div className="modal-body">
+            {children}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Modern Input Component
+const ModernInput = ({ 
+  label, 
+  error, 
+  type = "text", 
+  value, 
+  onChange, 
+  placeholder, 
+  required = false,
+  ...props 
+}) => (
+  <div className="mb-3">
+    {label && (
+      <label className="form-label fw-semibold text-dark mb-2">
+        {label} {required && <span className="text-danger">*</span>}
+      </label>
+    )}
+    <input
+      type={type}
+      className={`form-control modern-input ${error ? 'is-invalid' : ''}`}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      {...props}
+    />
+    {error && <div className="invalid-feedback d-block">{error}</div>}
+  </div>
+);
+
+// Modern Table Row Skeleton
+const TableRowSkeleton = () => (
+  <tr>
+    {[...Array(8)].map((_, i) => (
+      <td key={i}>
+        <div className="skeleton-line" style={{ width: i === 1 ? '80%' : '60%' }}></div>
+      </td>
+    ))}
+  </tr>
+);
+
+export default function ModernClientsPage() {
   const [q, setQ] = useState("");
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
@@ -40,6 +171,61 @@ export default function ClientsPage() {
     return !!(localStorage.getItem("token") || sessionStorage.getItem("token"));
   }, []);
 
+  // Enhanced validation functions
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validateNIC = (nic) => {
+    // Support for both old (9 digits + V) and new (12 digits) NIC formats
+    const oldNICRegex = /^[0-9]{9}[Vv]$/;
+    const newNICRegex = /^[0-9]{12}$/;
+    return oldNICRegex.test(nic) || newNICRegex.test(nic);
+  };
+
+  const validatePhone = (phone) => {
+    const phoneRegex = /^[0-9]{10}$/;
+    return phoneRegex.test(phone.replace(/[-\s]/g, ''));
+  };
+
+  const validatePassword = (password) => {
+    return password.length >= 8;
+  };
+
+  const showSuccessAlert = (title, message) => {
+    Swal.fire({
+      title,
+      text: message,
+      icon: 'success',
+      confirmButtonColor: '#2F80ED',
+      timer: 3000,
+      showConfirmButton: true
+    });
+  };
+
+  const showErrorAlert = (title, message) => {
+    Swal.fire({
+      title,
+      text: message,
+      icon: 'error',
+      confirmButtonColor: '#EB5757'
+    });
+  };
+
+  const showConfirmDialog = (title, text, confirmButtonText = "Yes, proceed") => {
+    return Swal.fire({
+      title,
+      text,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#2F80ED',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText,
+      cancelButtonText: 'Cancel'
+    });
+  };
+
   async function load() {
     if (!isAuthenticated) {
       setError("Please log in to access this page.");
@@ -56,13 +242,19 @@ export default function ClientsPage() {
       console.error("Failed to load clients:", error);
       if (error.response?.status === 403) {
         setError("Access denied. You don't have permission to view clients.");
+        showErrorAlert("Access Denied", "You don't have permission to view clients.");
       } else if (error.response?.status === 401) {
-        setError("Session expired. Please log in again.");
-        setTimeout(() => {
+        const result = await showConfirmDialog(
+          "Session Expired", 
+          "Your session has expired. Would you like to log in again?",
+          "Yes, Log In"
+        );
+        if (result.isConfirmed) {
           window.location.href = "/login";
-        }, 2000);
+        }
       } else {
         setError("Failed to load clients. Please try again.");
+        showErrorAlert("Loading Failed", "Failed to load clients. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -75,7 +267,7 @@ export default function ClientsPage() {
 
   function onCreate() {
     if (!isAuthenticated) {
-      alert("Please log in to create clients.");
+      showErrorAlert("Authentication Required", "Please log in to create clients.");
       return;
     }
     setEditId(null);
@@ -86,7 +278,7 @@ export default function ClientsPage() {
 
   function onEdit(client) {
     if (!isAuthenticated) {
-      alert("Please log in to edit clients.");
+      showErrorAlert("Authentication Required", "Please log in to edit clients.");
       return;
     }
     setEditId(client.userID);
@@ -106,19 +298,52 @@ export default function ClientsPage() {
   function validateForm() {
     const errors = {};
     
-    if (!form.firstName.trim()) errors.firstName = "First name is required";
-    if (!form.lastName.trim()) errors.lastName = "Last name is required";
+    // First Name validation
+    if (!form.firstName.trim()) {
+      errors.firstName = "First name is required";
+    } else if (form.firstName.trim().length < 2) {
+      errors.firstName = "First name must be at least 2 characters";
+    } else if (form.firstName.trim().length > 50) {
+      errors.firstName = "First name cannot exceed 50 characters";
+    }
+
+    // Last Name validation
+    if (!form.lastName.trim()) {
+      errors.lastName = "Last name is required";
+    } else if (form.lastName.trim().length < 2) {
+      errors.lastName = "Last name must be at least 2 characters";
+    } else if (form.lastName.trim().length > 50) {
+      errors.lastName = "Last name cannot exceed 50 characters";
+    }
+
+    // Email validation
     if (!form.email.trim()) {
       errors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(form.email)) {
-      errors.email = "Email is invalid";
+    } else if (!validateEmail(form.email)) {
+      errors.email = "Please enter a valid email address";
     }
-    if (!form.nic.trim()) errors.nic = "NIC is required";
-    if (!form.phone.trim()) errors.phone = "Phone is required";
-    if (!editId && !form.password) {
-      errors.password = "Password is required";
-    } else if (!editId && form.password.length < 8) {
-      errors.password = "Password must be at least 8 characters";
+
+    // NIC validation
+    if (!form.nic.trim()) {
+      errors.nic = "NIC is required";
+    } else if (!validateNIC(form.nic)) {
+      errors.nic = "Please enter a valid NIC number (9 digits + V or 12 digits)";
+    }
+
+    // Phone validation
+    if (!form.phone.trim()) {
+      errors.phone = "Phone number is required";
+    } else if (!validatePhone(form.phone)) {
+      errors.phone = "Please enter a valid 10-digit phone number";
+    }
+
+    // Password validation (only for new clients)
+    if (!editId) {
+      if (!form.password) {
+        errors.password = "Password is required";
+      } else if (!validatePassword(form.password)) {
+        errors.password = "Password must be at least 8 characters long";
+      }
     }
 
     setFormErrors(errors);
@@ -133,8 +358,10 @@ export default function ClientsPage() {
     try {
       if (editId == null) {
         await createClient(form);
+        showSuccessAlert("Client Created", "Client has been created successfully!");
       } else {
         await updateClient(editId, form);
+        showSuccessAlert("Client Updated", "Client information has been updated successfully!");
       }
       setShowForm(false);
       await load();
@@ -143,31 +370,42 @@ export default function ClientsPage() {
       if (error.response?.data?.errors) {
         setFormErrors(error.response.data.errors);
       } else {
-        alert(error?.response?.data?.message || "Failed to save client. Please try again.");
+        const errorMessage = error?.response?.data?.message || "Failed to save client. Please try again.";
+        showErrorAlert("Save Failed", errorMessage);
       }
     }
   }
 
   async function onDelete(id) {
     if (!isAuthenticated) {
-      alert("Please log in to delete clients.");
+      showErrorAlert("Authentication Required", "Please log in to delete clients.");
       return;
     }
 
-    if (!window.confirm("Delete this client? This action cannot be undone.")) return;
+    const client = data.find(c => c.userID === id);
+    const clientName = client ? `${client.firstName} ${client.lastName}` : 'this client';
+
+    const result = await showConfirmDialog(
+      "Confirm Delete",
+      `Are you sure you want to delete ${clientName}? This action cannot be undone.`,
+      "Yes, Delete"
+    );
+
+    if (!result.isConfirmed) return;
     
     try {
       await deleteClient(id);
+      showSuccessAlert("Client Deleted", `${clientName} has been deleted successfully.`);
       await load();
     } catch (err) {
       const msg = err?.response?.data?.message || "Delete failed. Please try again.";
-      alert(msg);
+      showErrorAlert("Delete Failed", msg);
     }
   }
 
   function openPwd(id) {
     if (!isAuthenticated) {
-      alert("Please log in to change passwords.");
+      showErrorAlert("Authentication Required", "Please log in to change passwords.");
       return;
     }
     setPwdTarget(id);
@@ -179,11 +417,16 @@ export default function ClientsPage() {
   function validatePasswordForm() {
     const errors = {};
     
-    if (!pwdForm.currentPassword) errors.currentPassword = "Current password is required";
+    if (!pwdForm.currentPassword) {
+      errors.currentPassword = "Current password is required";
+    }
+    
     if (!pwdForm.newPassword) {
       errors.newPassword = "New password is required";
     } else if (pwdForm.newPassword.length < 8) {
       errors.newPassword = "New password must be at least 8 characters";
+    } else if (pwdForm.currentPassword === pwdForm.newPassword) {
+      errors.newPassword = "New password must be different from current password";
     }
 
     setPwdErrors(errors);
@@ -198,13 +441,14 @@ export default function ClientsPage() {
     try {
       await changePassword(pwdTarget, pwdForm);
       setShowPwd(false);
-      alert("Password updated successfully!");
+      showSuccessAlert("Password Updated", "Password has been changed successfully!");
     } catch (error) {
       console.error("Failed to change password:", error);
       if (error.response?.data?.errors) {
         setPwdErrors(error.response.data.errors);
       } else {
-        alert(error?.response?.data?.message || "Failed to change password. Please try again.");
+        const errorMessage = error?.response?.data?.message || "Failed to change password. Please try again.";
+        showErrorAlert("Password Change Failed", errorMessage);
       }
     }
   }
@@ -229,13 +473,20 @@ export default function ClientsPage() {
   if (!isAuthenticated) {
     return (
       <div className="container-fluid">
-        <div className="row justify-content-center">
+        <div className="row justify-content-center min-vh-50">
           <div className="col-md-6">
-            <div className="alert alert-warning text-center">
-              <h4>Authentication Required</h4>
-              <p>Please log in to access the clients management system.</p>
-              <a href="/login" className="btn btn-primary">Go to Login</a>
-            </div>
+            <ModernCard className="text-center">
+              <div className="card-body py-5">
+                <div className="display-1 text-muted mb-4">
+                  <i className="fas fa-lock"></i>
+                </div>
+                <h3 className="fw-bold text-dark mb-3">Authentication Required</h3>
+                <p className="text-muted mb-4">Please log in to access the clients management system.</p>
+                <a href="/login" className="btn btn-primary btn-lg px-4">
+                  <i className="fas fa-sign-in-alt me-2"></i>Go to Login
+                </a>
+              </div>
+            </ModernCard>
           </div>
         </div>
       </div>
@@ -244,39 +495,56 @@ export default function ClientsPage() {
 
   return (
     <div className="container-fluid">
-      <div className="d-flex align-items-center justify-content-between mb-3">
-        <div>
-          <h3 className="mb-0">Manage Clients</h3>
-          <small className="text-muted">Total: {total} clients</small>
+      {/* Header Section */}
+      <div className="row align-items-center mb-4">
+        <div className="col">
+          <div className="d-flex align-items-center gap-3">
+            <div className="p-3">
+              <i className="fas fa-users text-dark fa-lg"></i>
+            </div>
+            <div>
+              <h1 className="h3 fw-bold text-dark mb-1">Client Management</h1>
+              <p className="text-muted mb-0">Manage your clients efficiently and securely</p>
+            </div>
+          </div>
         </div>
-        <button className="btn btn-primary" onClick={onCreate}>
-          <i className="fa fa-plus me-2" /> New Client
-        </button>
+        <div className="col-auto">
+          <button className="btn btn-primary mt-4" onClick={onCreate}>
+            <i className="fa fa-plus me-2" /> New Client
+          </button>
+        </div>
       </div>
 
+      {/* Error Alert */}
       {error && (
-        <div className="alert alert-danger alert-dismissible fade show" role="alert">
-          <i className="fa fa-exclamation-triangle me-2"></i>
-          {error}
-          <button 
-            type="button" 
-            className="btn-close" 
-            onClick={() => setError("")}
-          ></button>
-        </div>
+        <ModernCard className="border-left-danger">
+          <div className="card-body py-3">
+            <div className="d-flex align-items-center">
+              <i className="fas fa-exclamation-triangle text-danger me-3 fa-lg"></i>
+              <div className="flex-grow-1">
+                <h6 className="fw-semibold text-dark mb-1">Error</h6>
+                <p className="text-muted mb-0">{error}</p>
+              </div>
+              <button 
+                className="btn-close" 
+                onClick={() => setError("")}
+              ></button>
+            </div>
+          </div>
+        </ModernCard>
       )}
 
-      <div className="card shadow">
-        <div className="card-body">
-          <div className="row g-2 mb-3">
-            <div className="col-sm-6 col-md-4">
-              <div className="input-group">
-                <span className="input-group-text">
-                  <i className="fa fa-search"></i>
-                </span>
+      {/* Main Content Card */}
+      <ModernCard>
+        <div className="card-header bg-transparent border-0 py-4">
+          <div className="row align-items-center">
+            <div className="col-md-6">
+              <div className="search-box position-relative">
+                <i className="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                 <input
-                  className="form-control"
-                  placeholder="Search name, email, or NIC..."
+                  type="text"
+                  className="form-control ps-5 modern-input"
+                  placeholder="Search clients by name, email, or NIC..."
                   value={q}
                   onChange={(e) => {
                     setPage(0);
@@ -285,97 +553,101 @@ export default function ClientsPage() {
                 />
               </div>
             </div>
-            <div className="col-sm-6 col-md-4 ms-auto">
-              <select
-                className="form-select"
-                value={size}
-                onChange={(e) => {
-                  setPage(0);
-                  setSize(parseInt(e.target.value, 10));
-                }}
-              >
-                <option value={10}>10 per page</option>
-                <option value={25}>25 per page</option>
-                <option value={50}>50 per page</option>
-              </select>
+            <div className="col-md-6">
+              <div className="d-flex gap-2 justify-content-md-end">
+                <select
+                  className="form-select modern-input w-auto"
+                  value={size}
+                  onChange={(e) => {
+                    setPage(0);
+                    setSize(parseInt(e.target.value, 10));
+                  }}
+                >
+                  <option value={10}>10 per page</option>
+                  <option value={25}>25 per page</option>
+                  <option value={50}>50 per page</option>
+                </select>
+                <button 
+                  className="btn btn-outline-primary"
+                  onClick={load}
+                  disabled={loading}
+                >
+                  <i className={`fas fa-sync-alt ${loading ? 'fa-spin' : ''}`}></i>
+                </button>
+              </div>
             </div>
           </div>
+        </div>
 
+        <div className="card-body p-0">
           <div className="table-responsive">
-            <table className="table table-bordered table-hover align-middle">
+            <table className="table table-hover align-middle mb-0 modern-table">
               <thead className="table-light">
                 <tr>
-                  <th width="80">ID</th>
-                  <th>Name</th>
+                  <th className="ps-4">Client</th>
                   <th>Email</th>
                   <th>NIC</th>
-                  <th>Phone</th>
-                  <th width="100">Gender</th>
-                  <th width="180">Created</th>
-                  <th width="160">Actions</th>
+                  <th>Gender</th>
+                  <th>Created</th>
+                  <th className="text-center pe-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr>
-                    <td colSpan={8} className="text-center py-4">
-                      <div className="spinner-border spinner-border-sm me-2" />
-                      Loading clients...
-                    </td>
-                  </tr>
+                  [...Array(5)].map((_, i) => <TableRowSkeleton key={i} />)
                 ) : data.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="text-center text-muted py-4">
-                      <i className="fa fa-users me-2"></i>
-                      {q ? "No clients match your search criteria." : "No clients found."}
+                    <td colSpan={6} className="text-center py-5">
+                      <div className="text-muted">
+                        <i className="fas fa-users fa-3x mb-3 opacity-25"></i>
+                        <h5 className="fw-semibold">No clients found</h5>
+                        <p>{q ? "No clients match your search criteria." : "Get started by creating your first client."}</p>
+                        {!q && (
+                          <button className="btn btn-primary mt-2" onClick={onCreate}>
+                            <i className="fas fa-plus me-2"></i>Create First Client
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ) : (
                   data.map((client) => (
-                    <tr key={client.userID}>
-                      <td className="fw-bold">#{client.userID}</td>
-                      <td>
-                        <strong>{client.firstName} {client.lastName}</strong>
+                    <tr key={client.userID} className="modern-table-row">
+                      <td className="ps-4">
+                        <div className="d-flex align-items-center gap-3">
+                          <UserAvatar name={`${client.firstName} ${client.lastName}`} />
+                          <div>
+                            <h6 className="fw-semibold text-dark mb-1">
+                              {client.firstName} {client.lastName}
+                            </h6>
+                            <small className="text-muted">ID: #{client.userID}</small>
+                          </div>
+                        </div>
                       </td>
-                      <td>{client.email}</td>
                       <td>
-                        <code>{client.nic || "-"}</code>
+                        <div>
+                          <div className="fw-medium text-dark">{client.email}</div>
+                          <small className="text-muted">{client.phone || "-"}</small>
+                        </div>
                       </td>
-                      <td>{client.phone || "-"}</td>
                       <td>
-                        <span className={`badge ${
-                          client.gender === 'MALE' ? 'bg-primary' : 'bg-primary'
-                        }`}>
+                        <code className="bg-light rounded px-2 py-1">{client.nic || "-"}</code>
+                      </td>
+                      <td>
+                        <span className={`badge bg-${client.gender === 'MALE' ? 'primary' : 'pink'}-soft text-${client.gender === 'MALE' ? 'primary' : 'pink'} rounded-pill`}>
                           {client.gender}
                         </span>
                       </td>
-                      <td className="text-muted small">
-                        {formatDate(client.createdAt)}
-                      </td>
                       <td>
-                        <div className="d-flex gap-1">
-                          <button
-                            className="btn btn-sm btn-outline-primary"
-                            onClick={() => onEdit(client)}
-                            title="Edit Client"
-                          >
-                            <i className="fa fa-edit" />
-                          </button>
-                          <button
-                            className="btn btn-sm btn-outline-warning"
-                            onClick={() => openPwd(client.userID)}
-                            title="Change Password"
-                          >
-                            <i className="fa fa-key" />
-                          </button>
-                          <button
-                            className="btn btn-sm btn-outline-danger"
-                            onClick={() => onDelete(client.userID)}
-                            title="Delete Client"
-                          >
-                            <i className="fa fa-trash" />
-                          </button>
-                        </div>
+                        <small className="text-muted">{formatDate(client.createdAt)}</small>
+                      </td>
+                      <td className="text-center pe-4">
+                        <ActionButtons
+                          onEdit={() => onEdit(client)}
+                          onChangePassword={() => openPwd(client.userID)}
+                          onDelete={() => onDelete(client.userID)}
+                          itemId={client.userID}
+                        />
                       </td>
                     </tr>
                   ))
@@ -384,279 +656,347 @@ export default function ClientsPage() {
             </table>
           </div>
 
+          {/* Pagination */}
           {!error && total > 0 && (
-            <div className="d-flex justify-content-between align-items-center mt-3">
-              <div className="text-muted">
-                Showing <strong>{total === 0 ? 0 : page * size + 1}</strong> to{" "}
-                <strong>{Math.min((page + 1) * size, total)}</strong> of{" "}
-                <strong>{total}</strong> clients
-              </div>
-              <div className="btn-group">
-                <button
-                  className="btn btn-outline-secondary btn-sm"
-                  disabled={page === 0}
-                  onClick={() => setPage(0)}
-                  title="First Page"
-                >
-                  <i className="fa fa-angle-double-left" />
-                </button>
-                <button
-                  className="btn btn-outline-secondary btn-sm"
-                  disabled={page === 0}
-                  onClick={() => setPage((p) => p - 1)}
-                  title="Previous Page"
-                >
-                  <i className="fa fa-angle-left" />
-                </button>
-                <span className="btn btn-outline-secondary btn-sm disabled">
-                  Page {page + 1} of {totalPages}
-                </span>
-                <button
-                  className="btn btn-outline-secondary btn-sm"
-                  disabled={page + 1 >= totalPages}
-                  onClick={() => setPage((p) => p + 1)}
-                  title="Next Page"
-                >
-                  <i className="fa fa-angle-right" />
-                </button>
-                <button
-                  className="btn btn-outline-secondary btn-sm"
-                  disabled={page + 1 >= totalPages}
-                  onClick={() => setPage(totalPages - 1)}
-                  title="Last Page"
-                >
-                  <i className="fa fa-angle-double-right" />
-                </button>
+            <div className="card-footer bg-transparent border-0 py-4">
+              <div className="row align-items-center">
+                <div className="col-md-6">
+                  <p className="text-muted mb-0">
+                    Showing <strong>{total === 0 ? 0 : page * size + 1}</strong> to{" "}
+                    <strong>{Math.min((page + 1) * size, total)}</strong> of{" "}
+                    <strong>{total}</strong> clients
+                  </p>
+                </div>
+                <div className="col-md-6">
+                  <div className="d-flex justify-content-md-end gap-2">
+                    <button
+                      className="btn btn-outline-primary btn-sm"
+                      disabled={page === 0}
+                      onClick={() => setPage(0)}
+                      title="First Page"
+                    >
+                      <i className="fas fa-angle-double-left"></i>
+                    </button>
+                    <button
+                      className="btn btn-outline-primary btn-sm"
+                      disabled={page === 0}
+                      onClick={() => setPage(p => p - 1)}
+                      title="Previous Page"
+                    >
+                      <i className="fas fa-angle-left"></i>
+                    </button>
+                    <span className="btn btn-light btn-sm disabled">
+                      Page {page + 1} of {totalPages}
+                    </span>
+                    <button
+                      className="btn btn-outline-primary btn-sm"
+                      disabled={page + 1 >= totalPages}
+                      onClick={() => setPage(p => p + 1)}
+                      title="Next Page"
+                    >
+                      <i className="fas fa-angle-right"></i>
+                    </button>
+                    <button
+                      className="btn btn-outline-primary btn-sm"
+                      disabled={page + 1 >= totalPages}
+                      onClick={() => setPage(totalPages - 1)}
+                      title="Last Page"
+                    >
+                      <i className="fas fa-angle-double-right"></i>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
         </div>
-      </div>
+      </ModernCard>
 
-      {/* Create / Edit Modal */}
-      {showForm && (
-        <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-lg">
-            <form className="modal-content" onSubmit={onSubmitForm}>
-              <div className="modal-header bg-primary text-white">
-                <h5 className="modal-title">
-                  <i className="fa fa-user me-2"></i>
-                  {editId ? "Edit Client" : "Create New Client"}
-                </h5>
-                <button
-                  type="button"
-                  className="btn-close btn-close-white"
-                  onClick={() => setShowForm(false)}
+      {/* Client Form Modal */}
+      <ModernModal
+        show={showForm}
+        onClose={() => setShowForm(false)}
+        title={editId ? "Edit Client" : "Create New Client"}
+        size="lg"
+      >
+        <form onSubmit={onSubmitForm}>
+          <div className="row g-3">
+            <div className="col-md-6">
+              <ModernInput
+                label="First Name"
+                value={form.firstName}
+                onChange={(e) => {
+                  setForm({ ...form, firstName: e.target.value });
+                  if (formErrors.firstName) setFormErrors({...formErrors, firstName: ''});
+                }}
+                error={formErrors.firstName}
+                required
+                maxLength={50}
+                placeholder="Enter first name (2-50 characters)"
+              />
+            </div>
+            <div className="col-md-6">
+              <ModernInput
+                label="Last Name"
+                value={form.lastName}
+                onChange={(e) => {
+                  setForm({ ...form, lastName: e.target.value });
+                  if (formErrors.lastName) setFormErrors({...formErrors, lastName: ''});
+                }}
+                error={formErrors.lastName}
+                required
+                maxLength={50}
+                placeholder="Enter last name (2-50 characters)"
+              />
+            </div>
+            
+            <div className="col-md-4">
+              <label className="form-label fw-semibold text-dark mb-2">Gender</label>
+              <select
+                className="form-select modern-input"
+                value={form.gender}
+                onChange={(e) => setForm({ ...form, gender: e.target.value })}
+              >
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
+              </select>
+            </div>
+            
+            <div className="col-md-4">
+              <ModernInput
+                label="NIC"
+                value={form.nic}
+                onChange={(e) => {
+                  setForm({ ...form, nic: e.target.value.toUpperCase() });
+                  if (formErrors.nic) setFormErrors({...formErrors, nic: ''});
+                }}
+                error={formErrors.nic}
+                required
+                maxLength={12}
+                placeholder="e.g., 123456789V or 123456789012"
+              />
+            </div>
+            
+            <div className="col-md-4">
+              <ModernInput
+                label="Phone"
+                value={form.phone}
+                onChange={(e) => {
+                  setForm({ ...form, phone: e.target.value });
+                  if (formErrors.phone) setFormErrors({...formErrors, phone: ''});
+                }}
+                error={formErrors.phone}
+                required
+                maxLength={10}
+                placeholder="10-digit phone number"
+              />
+            </div>
+            
+            <div className="col-md-6">
+              <ModernInput
+                label="Email"
+                type="email"
+                value={form.email}
+                onChange={(e) => {
+                  setForm({ ...form, email: e.target.value });
+                  if (formErrors.email) setFormErrors({...formErrors, email: ''});
+                }}
+                error={formErrors.email}
+                required
+                maxLength={100}
+                placeholder="Enter valid email address"
+              />
+            </div>
+
+            {!editId && (
+              <div className="col-md-6">
+                <ModernInput
+                  label="Password"
+                  type="password"
+                  value={form.password}
+                  onChange={(e) => {
+                    setForm({ ...form, password: e.target.value });
+                    if (formErrors.password) setFormErrors({...formErrors, password: ''});
+                  }}
+                  error={formErrors.password}
+                  required
+                  minLength={8}
+                  placeholder="Minimum 8 characters"
                 />
               </div>
-              <div className="modal-body">
-                <div className="row g-3">
-                  <div className="col-md-6">
-                    <label className="form-label">First Name *</label>
-                    <input
-                      className={`form-control ${formErrors.firstName ? 'is-invalid' : ''}`}
-                      value={form.firstName}
-                      onChange={(e) => {
-                        setForm({ ...form, firstName: e.target.value });
-                        if (formErrors.firstName) setFormErrors({...formErrors, firstName: ''});
-                      }}
-                      required
-                      maxLength={50}
-                    />
-                    {formErrors.firstName && (
-                      <div className="invalid-feedback">{formErrors.firstName}</div>
-                    )}
-                  </div>
-                  <div className="col-md-6">
-                    <label className="form-label">Last Name *</label>
-                    <input
-                      className={`form-control ${formErrors.lastName ? 'is-invalid' : ''}`}
-                      value={form.lastName}
-                      onChange={(e) => {
-                        setForm({ ...form, lastName: e.target.value });
-                        if (formErrors.lastName) setFormErrors({...formErrors, lastName: ''});
-                      }}
-                      required
-                      maxLength={50}
-                    />
-                    {formErrors.lastName && (
-                      <div className="invalid-feedback">{formErrors.lastName}</div>
-                    )}
-                  </div>
-                  
-                  <div className="col-md-4">
-                    <label className="form-label">Gender *</label>
-                    <select
-                      className="form-select"
-                      value={form.gender}
-                      onChange={(e) => setForm({ ...form, gender: e.target.value })}
-                    >
-                      <option value="MALE">Male</option>
-                      <option value="FEMALE">Female</option>
-                    </select>
-                  </div>
-                  
-                  <div className="col-md-4">
-                    <label className="form-label">NIC *</label>
-                    <input
-                      className={`form-control ${formErrors.nic ? 'is-invalid' : ''}`}
-                      value={form.nic}
-                      onChange={(e) => {
-                        setForm({ ...form, nic: e.target.value });
-                        if (formErrors.nic) setFormErrors({...formErrors, nic: ''});
-                      }}
-                      required
-                      maxLength={20}
-                    />
-                    {formErrors.nic && (
-                      <div className="invalid-feedback">{formErrors.nic}</div>
-                    )}
-                  </div>
-                  
-                  <div className="col-md-4">
-                    <label className="form-label">Phone *</label>
-                    <input
-                      className={`form-control ${formErrors.phone ? 'is-invalid' : ''}`}
-                      value={form.phone}
-                      onChange={(e) => {
-                        setForm({ ...form, phone: e.target.value });
-                        if (formErrors.phone) setFormErrors({...formErrors, phone: ''});
-                      }}
-                      required
-                      maxLength={15}
-                    />
-                    {formErrors.phone && (
-                      <div className="invalid-feedback">{formErrors.phone}</div>
-                    )}
-                  </div>
-                  
-                  <div className="col-md-6">
-                    <label className="form-label">Email *</label>
-                    <input
-                      type="email"
-                      className={`form-control ${formErrors.email ? 'is-invalid' : ''}`}
-                      value={form.email}
-                      onChange={(e) => {
-                        setForm({ ...form, email: e.target.value });
-                        if (formErrors.email) setFormErrors({...formErrors, email: ''});
-                      }}
-                      required
-                      maxLength={100}
-                    />
-                    {formErrors.email && (
-                      <div className="invalid-feedback">{formErrors.email}</div>
-                    )}
-                  </div>
-
-                  {!editId && (
-                    <div className="col-md-6">
-                      <label className="form-label">Password *</label>
-                      <input
-                        type="password"
-                        className={`form-control ${formErrors.password ? 'is-invalid' : ''}`}
-                        value={form.password}
-                        onChange={(e) => {
-                          setForm({ ...form, password: e.target.value });
-                          if (formErrors.password) setFormErrors({...formErrors, password: ''});
-                        }}
-                        required
-                        minLength={8}
-                        placeholder="Minimum 8 characters"
-                      />
-                      {formErrors.password && (
-                        <div className="invalid-feedback">{formErrors.password}</div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowForm(false)}
-                >
-                  Cancel
-                </button>
-                <button className="btn btn-primary" type="submit">
-                  <i className="fa fa-save me-2"></i>
-                  {editId ? "Update Client" : "Create Client"}
-                </button>
-              </div>
-            </form>
+            )}
           </div>
-        </div>
-      )}
-
-      {/* Password Modal */}
-      {showPwd && (
-        <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog">
-            <form className="modal-content" onSubmit={submitPwd}>
-              <div className="modal-header bg-warning text-dark">
-                <h5 className="modal-title">
-                  <i className="fa fa-key me-2"></i>
-                  Change Password
-                </h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setShowPwd(false)}
-                />
-              </div>
-              <div className="modal-body">
-                <div className="mb-3">
-                  <label className="form-label">Current Password *</label>
-                  <input
-                    type="password"
-                    className={`form-control ${pwdErrors.currentPassword ? 'is-invalid' : ''}`}
-                    value={pwdForm.currentPassword}
-                    onChange={(e) => {
-                      setPwdForm({ ...pwdForm, currentPassword: e.target.value });
-                      if (pwdErrors.currentPassword) setPwdErrors({...pwdErrors, currentPassword: ''});
-                    }}
-                    required
-                  />
-                  {pwdErrors.currentPassword && (
-                    <div className="invalid-feedback">{pwdErrors.currentPassword}</div>
-                  )}
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">New Password *</label>
-                  <input
-                    type="password"
-                    className={`form-control ${pwdErrors.newPassword ? 'is-invalid' : ''}`}
-                    minLength={8}
-                    value={pwdForm.newPassword}
-                    onChange={(e) => {
-                      setPwdForm({ ...pwdForm, newPassword: e.target.value });
-                      if (pwdErrors.newPassword) setPwdErrors({...pwdErrors, newPassword: ''});
-                    }}
-                    required
-                    placeholder="Minimum 8 characters"
-                  />
-                  {pwdErrors.newPassword && (
-                    <div className="invalid-feedback">{pwdErrors.newPassword}</div>
-                  )}
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button
-                  className="btn btn-secondary"
-                  type="button"
-                  onClick={() => setShowPwd(false)}
-                >
-                  Cancel
-                </button>
-                <button className="btn btn-warning" type="submit">
-                  <i className="fa fa-key me-2"></i>
-                  Update Password
-                </button>
-              </div>
-            </form>
+          
+          <div className="modal-footer border-0 pt-4">
+            <button
+              type="button"
+              className="btn btn-light"
+              onClick={() => setShowForm(false)}
+            >
+              Cancel
+            </button>
+            <button className="btn btn-primary px-4" type="submit">
+              <i className="fas fa-save me-2"></i>
+              {editId ? "Update Client" : "Create Client"}
+            </button>
           </div>
-        </div>
-      )}
+        </form>
+      </ModernModal>
+
+      {/* Password Change Modal */}
+      <ModernModal
+        show={showPwd}
+        onClose={() => setShowPwd(false)}
+        title="Change Password"
+      >
+        <form onSubmit={submitPwd}>
+          <ModernInput
+            label="Current Password"
+            type="password"
+            value={pwdForm.currentPassword}
+            onChange={(e) => {
+              setPwdForm({ ...pwdForm, currentPassword: e.target.value });
+              if (pwdErrors.currentPassword) setPwdErrors({...pwdErrors, currentPassword: ''});
+            }}
+            error={pwdErrors.currentPassword}
+            required
+            placeholder="Enter current password"
+          />
+          <ModernInput
+            label="New Password"
+            type="password"
+            value={pwdForm.newPassword}
+            onChange={(e) => {
+              setPwdForm({ ...pwdForm, newPassword: e.target.value });
+              if (pwdErrors.newPassword) setPwdErrors({...pwdErrors, newPassword: ''});
+            }}
+            error={pwdErrors.newPassword}
+            required
+            minLength={8}
+            placeholder="Minimum 8 characters, different from current"
+          />
+          
+          <div className="modal-footer border-0 pt-4">
+            <button
+              type="button"
+              className="btn btn-light"
+              onClick={() => setShowPwd(false)}
+            >
+              Cancel
+            </button>
+            <button className="btn btn-warning px-4" type="submit">
+              <i className="fas fa-key me-2"></i>
+              Update Password
+            </button>
+          </div>
+        </form>
+      </ModernModal>
+
+      {/* Modern Styles */}
+      <style jsx>{`
+        .modern-card {
+          border-radius: 16px;
+          background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+          transition: all 0.3s ease;
+        }
+              
+        .modern-modal {
+          border-radius: 20px;
+          overflow: hidden;
+        }
+        
+        .modern-table {
+          border: none;
+        }
+        
+        .modern-table thead th {
+          border: none;
+          font-weight: 600;
+          font-size: 0.875rem;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          color: #6c757d;
+          padding: 1rem 1.5rem;
+        }
+        
+        .modern-table tbody td {
+          padding: 1.25rem 1.5rem;
+          border-bottom: 1px solid #f1f3f4;
+          vertical-align: middle;
+        }
+        
+        .modern-table-row {
+          transition: all 0.2s ease;
+          border-left: 4px solid transparent;
+        }
+        
+        .modern-table-row:hover {
+          background-color: rgba(47, 128, 237, 0.04) !important;
+          border-left-color: #2F80ED;
+          transform: translateX(4px);
+        }
+        
+        .modern-input {
+          border-radius: 12px;
+          border: 2px solid #e9ecef;
+          transition: all 0.3s ease;
+        }
+        
+        .modern-input:focus {
+          border-color: #2F80ED;
+          box-shadow: 0 0 0 0.2rem rgba(47, 128, 237, 0.1);
+        }
+        
+        .btn-icon {
+          width: 32px;
+          height: 32px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.3s ease;
+        }
+        
+        .btn-icon:hover {
+          transform: scale(1.1);
+        }
+        
+        .border-left-danger {
+          border-left: 4px solid #EB5757 !important;
+        }
+        
+        .bg-primary-soft {
+          background-color: rgba(47, 128, 237, 0.1) !important;
+        }
+        
+        .bg-pink-soft {
+          background-color: rgba(235, 87, 87, 0.1) !important;
+        }
+        
+        .text-pink {
+          color: #EB5757 !important;
+        }
+        
+        .skeleton-line {
+          height: 12px;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          animation: loading 1.5s infinite;
+          border-radius: 6px;
+        }
+        
+        @keyframes loading {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+        
+        .search-box input:focus {
+          border-color: #2F80ED;
+          box-shadow: 0 0 0 0.2rem rgba(47, 128, 237, 0.1);
+        }
+        .table-responsive {
+          overflow-x: hidden !important;
+        }
+      `}</style>
     </div>
   );
 }
