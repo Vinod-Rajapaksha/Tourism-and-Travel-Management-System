@@ -4,15 +4,13 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import "../assets/admin.css";
 import profileSvg from "../assets/img/undraw_profile.svg";
+import { useLoader } from "../context/LoaderContext"; 
 
-const Topbar = ({
-  userName,
-  onToggleSidebar,
-  onLogout,
-  rightItems,
-}) => {
+const Topbar = ({ userName, onToggleSidebar, onLogout, rightItems }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { setLoading } = useLoader(); 
+
   const [open, setOpen] = useState(false);
   const btnRef = useRef(null);
   const menuRef = useRef(null);
@@ -65,7 +63,16 @@ const Topbar = ({
       });
   }, []);
 
-  const displayName = profile?.fname || userName  ;
+  const displayName = profile?.fname || userName;
+
+  const handleProfileClick = () => {
+    close();
+    setLoading(true);
+    setTimeout(() => {
+      navigate("/profile");
+      setLoading(false);
+    }, 800); 
+  };
 
   return (
     <nav
@@ -127,10 +134,7 @@ const Topbar = ({
             <button
               type="button"
               className="dropdown-item"
-              onClick={() => {
-                close();
-                navigate("/profile");
-              }}
+              onClick={handleProfileClick}
               role="menuitem"
             >
               <i className="fas fa-user fa-sm fa-fw me-2 text-gray-400" />
