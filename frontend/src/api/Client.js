@@ -1,8 +1,4 @@
-import axios from "axios";
-
-const api = axios.create({
-  baseURL: "/api",
-});
+import api from "../services/api";
 
 api.interceptors.request.use(
   (config) => {
