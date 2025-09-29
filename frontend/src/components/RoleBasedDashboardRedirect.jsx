@@ -1,4 +1,3 @@
-// components/RoleBasedDashboardRedirect.jsx
 import { useAuth } from "../hooks/useAuth";
 import { Navigate } from "react-router-dom";
 
