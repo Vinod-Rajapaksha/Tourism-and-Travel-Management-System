@@ -1,21 +1,21 @@
-import React from "react";
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import { useLoader } from "../../context/LoaderContext";
 import "../../assets/main.css";
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
+  const { setLoading } = useLoader(); 
 
   const qs = useMemo(() => new URLSearchParams(location.search), [location.search]);
-  const success = qs.get("success");   
-  const urlError = qs.get("error"); 
+  const success = qs.get("success");
+  const urlError = qs.get("error");
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPwd, setShowPwd] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(urlError || "");
   const [justRegistered, setJustRegistered] = useState(success === "registered");
 
@@ -30,13 +30,17 @@ export default function Login() {
     e.preventDefault();
     setError("");
     setLoading(true);
+
+    const start = Date.now();
     try {
-      await login(form); 
+      await login(form);
       navigate("/dashboard");
     } catch (err) {
       setError(err?.response?.data?.message || "Invalid credentials");
     } finally {
-      setLoading(false);
+      const elapsed = Date.now() - start;
+      const minDuration = 1000;
+      setTimeout(() => setLoading(false), Math.max(0, minDuration - elapsed));
     }
   };
 
@@ -56,7 +60,9 @@ export default function Login() {
             <i className="fas fa-key" aria-hidden />Admin
           </h2>
           <div className="text-sci">
-            <h2><span>Login Your Admin Account</span></h2>
+            <h2>
+              <span>Login Your Admin Account</span>
+            </h2>
           </div>
           {error && <div className="alert alert-danger">{error}</div>}
         </div>
@@ -64,7 +70,6 @@ export default function Login() {
         <div className="logreg-box">
           <div className="form-container active">
             <div className="form-box">
-              
               <form className="user" style={{ marginTop: "2rem" }} onSubmit={onSubmit} noValidate>
                 <h2>Welcome Back!</h2>
 
@@ -81,7 +86,9 @@ export default function Login() {
                     aria-describedby="email-label"
                     autoFocus
                   />
-                  <label id="email-label" htmlFor="email-input">Email</label>
+                  <label id="email-label" htmlFor="email-input">
+                    Email
+                  </label>
                   <i className="icon fas fa-envelope" aria-hidden />
                 </div>
 
@@ -97,7 +104,9 @@ export default function Login() {
                     autoComplete="current-password"
                     aria-describedby="password-label"
                   />
-                  <label id="password-label" htmlFor="password">Password</label>
+                  <label id="password-label" htmlFor="password">
+                    Password
+                  </label>
 
                   <i
                     className={`icon-right fas ${showPwd ? "fa-eye" : "fa-eye-slash"} password-toggle`}
@@ -109,8 +118,8 @@ export default function Login() {
                   <i className="icon fas fa-lock" aria-hidden />
                 </div>
 
-                <button type="submit" className="btn1 mt-5" disabled={loading}>
-                  {loading ? "Signing in..." : "Login"}
+                <button type="submit" className="btn1 mt-5">
+                  Login
                 </button>
               </form>
             </div>
