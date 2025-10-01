@@ -5,6 +5,7 @@ import TopNav from "../components/TopNav";
 import "../assets/admin.css";
 
 export default function BaseLayout() {
+  
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false);
   const [isNarrow, setIsNarrow] = useState(() => {
