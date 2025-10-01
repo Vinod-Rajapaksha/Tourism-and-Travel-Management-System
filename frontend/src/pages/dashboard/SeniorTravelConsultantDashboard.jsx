@@ -9,6 +9,8 @@ const SeniorTravelConsultantDashboard = () => {
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [formErrors, setFormErrors] = useState({});
+
 
   const [formData, setFormData] = useState({
     image: '',
@@ -81,151 +83,170 @@ const SeniorTravelConsultantDashboard = () => {
     }));
   };
 
-  const validateForm = () => {
-    if (!formData.title.trim()) {
-      setError('Title is required');
-      return false;
-    }
-    if (!formData.description.trim()) {
-      setError('Description is required');
-      return false;
-    }
-    if (!formData.price || parseFloat(formData.price) <= 0) {
-      setError('Price must be a positive number');
-      return false;
-    }
-    if (!formData.offer || parseFloat(formData.offer) <= 0) {
+const validateForm = () => {
+  // Title
+  if (!formData.title.trim()) {
+    setError('Title is required');
+    return false;
+  }
+
+  // Description
+  if (!formData.description.trim()) {
+    setError('Description is required');
+    return false;
+  }
+
+  // Price
+  const price = parseFloat(formData.price);
+  if (!price || price <= 0) {
+    setError('Price must be a positive number');
+    return false;
+  }
+
+  // Offer only validate if user typed something
+  if (formData.offer !== '') {
+    const offer = parseFloat(formData.offer);
+    if (!offer || offer <= 0) {
       setError('Offer price must be a positive number');
       return false;
     }
-    if (parseFloat(formData.offer) > parseFloat(formData.price)) {
+    if (offer > price) {
       setError('Offer price cannot be higher than original price');
       return false;
     }
-    return true;
+  }
+
+  return true;
+};
+
+
+
+const handleCreatePackage = (e) => {
+  e.preventDefault();
+  setError('');
+
+  if (!validateForm()) return;
+
+  setLoading(true);
+
+  const price = parseFloat(formData.price);
+  // Fix: check if offer is empty string or if it can't be parsed
+  const offerValue = formData.offer === '' || formData.offer === null 
+    ? price 
+    : parseFloat(formData.offer);
+
+  const payload = {
+    image: formData.image || null,
+    title: formData.title,
+    description: formData.description,
+    status: formData.status,
+    price: price,
+    offer: offerValue  // using the computed value
   };
 
-  const handleCreatePackage = (e) => {
-    e.preventDefault();
-    setError('');
-    
-    if (!validateForm()) {
-      return;
-    }
+  console.log('Creating package with payload:', payload);
 
-    setLoading(true);
-    
-    const payload = {
-      ...formData,
-      price: parseFloat(formData.price),
-      offer: parseFloat(formData.offer)
-    };
-    
-    console.log('Creating package with payload:', payload);
-    
-    fetch(api, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload)
+  fetch(api, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(response => {
+      console.log('Create response status:', response.status);
+      if (!response.ok) {
+        return response.text().then(text => {
+          throw new Error(`HTTP ${response.status}: ${text}`);
+        });
+      }
+      return response.json();
     })
-      .then(response => {
-        console.log('Create response status:', response.status);
-        console.log('Create response headers:', response.headers);
-        
-        if (!response.ok) {
-          return response.text().then(text => {
-            throw new Error(`HTTP ${response.status}: ${text}`);
-          });
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log('Created package:', data);
-        loadPackages();
-        setShowCreateModal(false);
-        resetForm();
-        setLoading(false);
-        alert('Package created successfully!');
-      })
-      .catch(err => {
-        console.error("Full create error:", err);
-        setError(`Failed to create package: ${err.message}`);
-        setLoading(false);
-        
-        // Demo fallback
-        const newPackage = {
-          ...payload,
-          packageID: Date.now()
-        };
-        setPackages(prev => [...prev, newPackage]);
-        setShowCreateModal(false);
-        resetForm();
-        alert('Package created successfully! (Demo mode)');
-      });
-  };
+    .then(data => {
+      console.log('Created package:', data);
+      loadPackages();
+      setShowCreateModal(false);
+      resetForm();
+      setLoading(false);
+      alert('Package created successfully!');
+    })
+    .catch(err => {
+      console.error("Full create error:", err);
+      setError(`Failed to create package: ${err.message}`);
+      setLoading(false);
+
+      // Demo fallback
+      const newPackage = { ...payload, packageID: Date.now() };
+      setPackages(prev => [...prev, newPackage]);
+      setShowCreateModal(false);
+      resetForm();
+      alert('Package created successfully! (Demo mode)');
+    });
+};
+
 
   const handleEditPackage = (e) => {
-    e.preventDefault();
-    setError('');
-    
-    if (!validateForm()) {
-      return;
-    }
+  e.preventDefault();
+  setError('');
 
-    setLoading(true);
-    
-    const payload = {
-      ...formData,
-      price: parseFloat(formData.price),
-      offer: parseFloat(formData.offer)
-    };
-    
-    console.log('Updating package:', selectedPackage.packageID, 'with payload:', payload);
-    
-    fetch(`${api}/${selectedPackage.packageID}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload)
-    })
-      .then(response => {
-        console.log('Update response status:', response.status);
-        if (!response.ok) {
-          return response.text().then(text => {
-            throw new Error(`HTTP ${response.status}: ${text}`);
-          });
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log('Updated package:', data);
-        loadPackages();
-        setShowEditModal(false);
-        resetForm();
-        setSelectedPackage(null);
-        setLoading(false);
-        alert('Package updated successfully!');
-      })
-      .catch(err => {
-        console.error("Full update error:", err);
-        setError(`Failed to update package: ${err.message}`);
-        setLoading(false);
-        
-        // Demo fallback
-        setPackages(prev => prev.map(pkg => 
-          pkg.packageID === selectedPackage.packageID 
-            ? { ...pkg, ...payload }
-            : pkg
-        ));
-        setShowEditModal(false);
-        resetForm();
-        setSelectedPackage(null);
-        alert('Package updated successfully! (Demo mode)');
-      });
+  if (!validateForm()) return;
+
+  setLoading(true);
+
+  const price = parseFloat(formData.price);
+  const offer = formData.offer === '' ? price : parseFloat(formData.offer);
+
+  //  build clean payload
+  const payload = {
+    image: formData.image,
+    title: formData.title,
+    description: formData.description,
+    status: formData.status,
+    price,
+    offer
   };
+
+  console.log('Updating package:', selectedPackage.packageID, 'with payload:', payload);
+
+  fetch(`${api}/${selectedPackage.packageID}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(response => {
+      console.log('Update response status:', response.status);
+      if (!response.ok) {
+        return response.text().then(text => {
+          throw new Error(`HTTP ${response.status}: ${text}`);
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Updated package:', data);
+      loadPackages();
+      setShowEditModal(false);
+      resetForm();
+      setSelectedPackage(null);
+      setLoading(false);
+      alert('Package updated successfully!');
+    })
+    .catch(err => {
+      console.error("Full update error:", err);
+      setError(`Failed to update package: ${err.message}`);
+      setLoading(false);
+
+      // Demo fallback
+      setPackages(prev =>
+        prev.map(pkg =>
+          pkg.packageID === selectedPackage.packageID ? { ...pkg, ...payload } : pkg
+        )
+      );
+      setShowEditModal(false);
+      resetForm();
+      setSelectedPackage(null);
+      alert('Package updated successfully! (Demo mode)');
+    });
+};
+
 
   const handleDeletePackage = () => {
     setLoading(true);
@@ -381,51 +402,120 @@ const SeniorTravelConsultantDashboard = () => {
             WebkitTextFillColor: 'transparent',
             fontSize: '1.5rem',
             fontWeight: '700'
-          }}>🌟 TravelPro</h2>
+          }}> TravelPro</h2>
         </div>
-        <nav style={{ padding: '0 1rem' }}>
-          <button
-            style={{ 
-              width: '100%', 
-              padding: '1rem', 
-              border: 'none', 
-              background: activeView === 'dashboard' 
-                ? 'linear-gradient(135deg, #667eea, #764ba2)' 
-                : 'transparent', 
-              color: activeView === 'dashboard' ? 'white' : '#4a5568',
-              textAlign: 'left', 
-              cursor: 'pointer', 
-              fontSize: '1rem',
-              borderRadius: '12px',
-              marginBottom: '0.5rem',
-              fontWeight: '500',
-              transition: 'all 0.3s ease'
-            }}
-            onClick={() => setActiveView('dashboard')}
-          >
-            📊 Dashboard
-          </button>
-          <button
-            style={{ 
-              width: '100%', 
-              padding: '1rem', 
-              border: 'none', 
-              background: activeView === 'packages' 
-                ? 'linear-gradient(135deg, #667eea, #764ba2)' 
-                : 'transparent', 
-              color: activeView === 'packages' ? 'white' : '#4a5568',
-              textAlign: 'left', 
-              cursor: 'pointer', 
-              fontSize: '1rem',
-              borderRadius: '12px',
-              fontWeight: '500',
-              transition: 'all 0.3s ease'
-            }}
-            onClick={() => setActiveView('packages')}
-          >
-            📦 Package Management
-          </button>
-        </nav>
+<nav style={{ padding: '0 1rem' }}>
+  <button
+    style={{
+      width: '100%',
+      padding: '1rem',
+      border: 'none',
+      background: activeView === 'dashboard'
+        ? 'linear-gradient(135deg, #667eea, #764ba2)'
+        : 'transparent',
+      color: activeView === 'dashboard' ? 'white' : '#4a5568',
+      textAlign: 'left',
+      cursor: 'pointer',
+      fontSize: '1rem',
+      borderRadius: '12px',
+      marginBottom: '0.5rem',
+      fontWeight: '500',
+      transition: 'all 0.3s ease'
+    }}
+    onClick={() => setActiveView('dashboard')}
+  >
+    Dashboard
+  </button>
+
+  <button
+    style={{
+      width: '100%',
+      padding: '1rem',
+      border: 'none',
+      background: activeView === 'packages'
+        ? 'linear-gradient(135deg, #667eea, #764ba2)'
+        : 'transparent',
+      color: activeView === 'packages' ? 'white' : '#4a5568',
+      textAlign: 'left',
+      cursor: 'pointer',
+      fontSize: '1rem',
+      borderRadius: '12px',
+      marginBottom: '0.5rem',
+      fontWeight: '500',
+      transition: 'all 0.3s ease'
+    }}
+    onClick={() => setActiveView('packages')}
+  >
+    Package Management
+  </button>
+
+  <button
+    style={{
+      width: '100%',
+      padding: '1rem',
+      border: 'none',
+      background: activeView === 'guides'
+        ? 'linear-gradient(135deg, #667eea, #764ba2)'
+        : 'transparent',
+      color: activeView === 'guides' ? 'white' : '#4a5568',
+      textAlign: 'left',
+      cursor: 'pointer',
+      fontSize: '1rem',
+      borderRadius: '12px',
+      marginBottom: '0.5rem',
+      fontWeight: '500',
+      transition: 'all 0.3s ease'
+    }}
+    onClick={() => setActiveView('guides')}
+  >
+    Guide Management
+  </button>
+
+  <button
+    style={{
+      width: '100%',
+      padding: '1rem',
+      border: 'none',
+      background: activeView === 'availability'
+        ? 'linear-gradient(135deg, #667eea, #764ba2)'
+        : 'transparent',
+      color: activeView === 'availability' ? 'white' : '#4a5568',
+      textAlign: 'left',
+      cursor: 'pointer',
+      fontSize: '1rem',
+      borderRadius: '12px',
+      marginBottom: '0.5rem',
+      fontWeight: '500',
+      transition: 'all 0.3s ease'
+    }}
+    onClick={() => setActiveView('availability')}
+  >
+    Availability Dashboard
+  </button>
+
+  <button
+    style={{
+      width: '100%',
+      padding: '1rem',
+      border: 'none',
+      background: activeView === 'settings'
+        ? 'linear-gradient(135deg, #667eea, #764ba2)'
+        : 'transparent',
+      color: activeView === 'settings' ? 'white' : '#4a5568',
+      textAlign: 'left',
+      cursor: 'pointer',
+      fontSize: '1rem',
+      borderRadius: '12px',
+      marginBottom: '0.5rem',
+      fontWeight: '500',
+      transition: 'all 0.3s ease'
+    }}
+    onClick={() => setActiveView('settings')}
+  >
+    Settings
+  </button>
+</nav>
+
       </aside>
 
       {/* Main content */}
@@ -535,7 +625,7 @@ const SeniorTravelConsultantDashboard = () => {
                   setShowCreateModal(true);
                 }}
               >
-                ➕ Create Package
+                 Create Package
               </button>
             </div>
             
@@ -627,7 +717,7 @@ const SeniorTravelConsultantDashboard = () => {
                           border: '1px solid rgba(66, 153, 225, 0.3)'
                         }}
                       >
-                        ✏️ Edit
+                         Edit
                       </button>
                       <button 
                         onClick={() => openDeleteModal(pkg)}
@@ -639,7 +729,7 @@ const SeniorTravelConsultantDashboard = () => {
                           border: '1px solid rgba(245, 101, 101, 0.3)'
                         }}
                       >
-                        🗑️ Delete
+                         Delete
                       </button>
                     </div>
                   </div>
@@ -648,6 +738,45 @@ const SeniorTravelConsultantDashboard = () => {
             </div>
           </div>
         )}
+        {activeView === 'guides' && (
+  <div style={{ 
+    background: 'rgba(255, 255, 255, 0.95)',
+    backdropFilter: 'blur(20px)',
+    padding: '2rem',
+    borderRadius: '20px',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+  }}>
+    <h2 style={{ color: '#2d3748' }}>Guide Management</h2>
+    <p>Here you will manage tour guides (coming soon).</p>
+  </div>
+)}
+
+{activeView === 'availability' && (
+  <div style={{ 
+    background: 'rgba(255, 255, 255, 0.95)',
+    backdropFilter: 'blur(20px)',
+    padding: '2rem',
+    borderRadius: '20px',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+  }}>
+    <h2 style={{ color: '#2d3748' }}>Availability Dashboard</h2>
+    <p>Here you will track tour availability (coming soon).</p>
+  </div>
+)}
+
+{activeView === 'settings' && (
+  <div style={{ 
+    background: 'rgba(255, 255, 255, 0.95)',
+    backdropFilter: 'blur(20px)',
+    padding: '2rem',
+    borderRadius: '20px',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+  }}>
+    <h2 style={{ color: '#2d3748' }}>Settings</h2>
+    <p>Here you will configure your preferences (coming soon).</p>
+  </div>
+)}
+
       </main>
 
       {/* Create Modal */}
@@ -696,6 +825,7 @@ const SeniorTravelConsultantDashboard = () => {
                   style={inputStyle}
                   required
                 />
+                 {formErrors.title && <p style={{ color: "red", fontSize: "0.85rem" }}>{formErrors.title}</p>}
               </div>
               
               <div>
@@ -708,6 +838,7 @@ const SeniorTravelConsultantDashboard = () => {
                   style={{ ...inputStyle, minHeight: '100px', resize: 'vertical' }}
                   required
                 />
+                 {formErrors.description && <p style={{ color: "red", fontSize: "0.85rem" }}>{formErrors.description}</p>}
               </div>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -724,6 +855,7 @@ const SeniorTravelConsultantDashboard = () => {
                     step="0.01"
                     required
                   />
+                   {formErrors.price && <p style={{ color: "red", fontSize: "0.85rem" }}>{formErrors.price}</p>}
                 </div>
                 
                 <div>
@@ -737,8 +869,9 @@ const SeniorTravelConsultantDashboard = () => {
                     style={inputStyle}
                     min="0"
                     step="0.01"
-                    required
+                  
                   />
+                   {formErrors.offer && <p style={{ color: "red", fontSize: "0.85rem" }}>{formErrors.offer}</p>}
                 </div>
               </div>
               
