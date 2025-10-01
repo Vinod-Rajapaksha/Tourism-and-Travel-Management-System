@@ -31,7 +31,9 @@ const UserAvatar = ({ name, size = "md" }) => {
         width: sizes[size], 
         height: sizes[size], 
         backgroundColor: color,
-        fontSize: size === 'sm' ? '12px' : '14px'
+        fontSize: size === 'sm' ? '12px' : '14px',
+        flex: `0 0 ${sizes[size]}`,
+        aspectRatio: '1 / 1'
       }}
     >
       {initials}
