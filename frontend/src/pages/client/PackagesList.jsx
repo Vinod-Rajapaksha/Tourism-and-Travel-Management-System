@@ -81,12 +81,19 @@ const ClientPackagesPage = () => {
             <img src={selectedPackage?.image} alt={selectedPackage?.title} />
             <div className="summary-details">
               <h4>{selectedPackage?.title}</h4>
-              <p className="location">📍 {selectedPackage?.location}</p>
-              <p className="duration">🕒 {selectedPackage?.duration}</p>
+              <p className="location"> {selectedPackage?.location}</p>
+              <p className="duration"> {selectedPackage?.duration}</p>
               <div className="booking-price">
-                <span className="offer-price">${selectedPackage?.offer}</span>
-                <span className="original-price">${selectedPackage?.price}</span>
-              </div>
+  {selectedPackage?.offer < selectedPackage?.price ? (
+    <>
+      <span className="offer-price">${selectedPackage?.offer}</span>
+      <span className="original-price">${selectedPackage?.price}</span>
+    </>
+  ) : (
+    <span className="offer-price">${selectedPackage?.price}</span>
+  )}
+</div>
+
             </div>
           </div>
         </div>
@@ -109,7 +116,7 @@ const ClientPackagesPage = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
             />
-            <button className="search-btn">🔍</button>
+            <button className="search-btn"></button>
           </div>
         </div>
         <div className="hero-image">
@@ -140,9 +147,11 @@ const ClientPackagesPage = () => {
             <div key={pkg.packageID} className="package-card">
               <div className="package-image-container">
                 <img src={pkg.image || "https://via.placeholder.com/400x200"} alt={pkg.title} className="package-image" />
-                <div className="discount-badge">
+                {pkg.offer < pkg.price && (
+                  <div className="discount-badge">
                   {calculateDiscount(pkg.price, pkg.offer)}% OFF
-                </div>
+                    </div>
+                  )}
                 <div className="package-rating">
                   <div className="stars">{renderStars(pkg.rating)}</div>
                   <span className="rating-text">({pkg.reviews || 0} reviews)</span>
@@ -152,26 +161,33 @@ const ClientPackagesPage = () => {
               <div className="package-content">
                 <div className="package-header">
                   <h3>{pkg.title}</h3>
-                  <p className="location">📍 {pkg.location || "Unknown"}</p>
+                  <p className="location"> {pkg.location || "Unknown"}</p>
                 </div>
                 <p className="description">{pkg.description}</p>
 
                 <div className="package-details">
                   <div className="detail-item">
-                    <span className="icon">🕒</span>
+                    <span className="icon"></span>
                     <span>{pkg.duration || "N/A"}</span>
                   </div>
                   <div className="detail-item">
-                    <span className="icon">⭐</span>
-                    <span>{pkg.rating || 0}/5</span>
+                    <span className="icon"></span>
+                    <span>{pkg.rating || 0}/</span>
                   </div>
                 </div>
 
                 <div className="package-pricing">
                   <div className="price-container">
-                    <span className="original-price">${pkg.price}</span>
-                    <span className="offer-price">${pkg.offer}</span>
+                    {pkg.offer < pkg.price ? (
+                      <>
+                        <span className="original-price">${pkg.price}</span>
+                        <span className="offer-price">${pkg.offer}</span>
+                      </>
+                    ) : (
+                      <span className="offer-price">${pkg.price}</span>
+                    )}
                     <span className="price-note">per person</span>
+
                   </div>
                 </div>
 
