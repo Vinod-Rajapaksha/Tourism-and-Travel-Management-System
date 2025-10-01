@@ -18,6 +18,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(urlError || "");
   const [justRegistered, setJustRegistered] = useState(success === "registered");
+  const [errors, setErrors] = useState({});   // 🔹 validation errors
 
   useEffect(() => {
     if (justRegistered) {
@@ -26,9 +27,31 @@ export default function Login() {
     }
   }, [justRegistered]);
 
+  // 🔹 Validation logic
+  const validateForm = () => {
+    const newErrors = {};
+    if (!form.email) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(form.email)) {
+      newErrors.email = "Enter a valid email address";
+    }
+
+    if (!form.password) {
+      newErrors.password = "Password is required";
+    } else if (form.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const onSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!validateForm()) return; // stop if errors
+
     setLoading(true);
     try {
       await login(form); 
@@ -73,7 +96,6 @@ export default function Login() {
                     type="email"
                     id="email-input"
                     name="email"
-                    required
                     placeholder=" "
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -83,6 +105,7 @@ export default function Login() {
                   />
                   <label id="email-label" htmlFor="email-input">Email</label>
                   <i className="icon fas fa-envelope" aria-hidden />
+                  {errors.email && <p className="error-text">{errors.email}</p>}
                 </div>
 
                 <div className="input-box mt-5">
@@ -90,7 +113,6 @@ export default function Login() {
                     type={showPwd ? "text" : "password"}
                     id="password"
                     name="password"
-                    required
                     placeholder=" "
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -107,6 +129,7 @@ export default function Login() {
                     onClick={() => setShowPwd((s) => !s)}
                   />
                   <i className="icon fas fa-lock" aria-hidden />
+                  {errors.password && <p className="error-text">{errors.password}</p>}
                 </div>
 
                 <button type="submit" className="btn1 mt-5" disabled={loading}>
