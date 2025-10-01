@@ -28,7 +28,7 @@ public class SecurityConfig {
                 })
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-
+                        .requestMatchers("/api/packages/**").permitAll() // allow anyone
                         .requestMatchers("/api/manager/dashboard/**").hasRole("GENERAL_MANAGER")
                         .requestMatchers("/api/consultant/**").hasRole("SENIOR_TRAVEL_CONSULTANT")
                         .requestMatchers("/api/customer-service/**").hasRole("CUSTOMER_SERVICE_EXECUTIVE")
