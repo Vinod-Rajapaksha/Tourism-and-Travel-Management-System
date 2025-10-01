@@ -2,6 +2,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import "../assets/admin.css";
 
+
 export default function SideNav({ currentRole, toggled = false, onItemClick }) {
   const items = [
     { header: "Interface" },
@@ -77,3 +78,6 @@ export default function SideNav({ currentRole, toggled = false, onItemClick }) {
     </ul>
   );
 }
+
+
+
