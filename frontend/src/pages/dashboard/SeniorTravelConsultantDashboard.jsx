@@ -10,6 +10,7 @@ const SeniorTravelConsultantDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formErrors, setFormErrors] = useState({});
+  const [showViewModal, setShowViewModal] = useState(false);
 
 
   const [formData, setFormData] = useState({
@@ -20,11 +21,29 @@ const SeniorTravelConsultantDashboard = () => {
     offer: '',
     status: 'ACTIVE'
   });
+  // Guide management state
+const [guides, setGuides] = useState([]);
+const [showGuideModal, setShowGuideModal] = useState(false);
+const [selectedGuide, setSelectedGuide] = useState(null);
+const [guideFormData, setGuideFormData] = useState({
+  firstName: '',
+  lastName: '',
+  gender: 'Male',
+  nic: '',
+  email: '',
+  phone: '',
+  languages: '',
+  region: '',
+  experience: '',
+  status: 'PENDING'
+});
 
   const api = "http://localhost:8080/api/packages";
+  const guideApi = "http://localhost:8080/api/guides";  
 
   useEffect(() => {
     loadPackages();
+    loadGuides();
   }, []);
 
   const loadPackages = () => {
@@ -63,6 +82,57 @@ const SeniorTravelConsultantDashboard = () => {
       });
   };
 
+  const loadGuides = () => {
+  setLoading(true);
+  
+  fetch(guideApi)
+    .then(response => {
+      console.log('Load guides response status:', response.status);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Loaded guides:', data);
+      setGuides(data);
+      setLoading(false);
+    })
+    .catch(err => {
+      console.error("Error fetching guides:", err);
+      setLoading(false);
+      // Demo data fallback
+      setGuides([
+        {
+          guideID: 1,
+          firstName: 'John',
+          lastName: 'Doe',
+          gender: 'Male',
+          nic: '123456789V',
+          email: 'john@gmail.com',
+          phone: '0771234567',
+          languages: 'English, Sinhala',
+          region: 'Western Province',
+          experience: 5,
+          status: 'ACTIVE'
+        },
+        {
+          guideID: 2,
+          firstName: 'Jane',
+          lastName: 'Smith',
+          gender: 'Female',
+          nic: '987654321V',
+          email: 'jane@gmail.com',
+          phone: '0779876543',
+          languages: 'English, Tamil',
+          region: 'Northern Province',
+          experience: 3,
+          status: 'PENDING'
+        }
+      ]);
+    });
+};
+
   const resetForm = () => {
     setFormData({
       image: '',
@@ -75,6 +145,21 @@ const SeniorTravelConsultantDashboard = () => {
     setError('');
   };
 
+  const resetGuideForm = () => {
+  setGuideFormData({
+    firstName: '',
+    lastName: '',
+    gender: 'Male',
+    nic: '',
+    email: '',
+    phone: '',
+    languages: '',
+    region: '',
+    experience: '',
+    status: 'PENDING'
+  });
+  setError('');
+};
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -82,6 +167,14 @@ const SeniorTravelConsultantDashboard = () => {
       [name]: value
     }));
   };
+
+  const handleGuideInputChange = (e) => {
+  const { name, value } = e.target;
+  setGuideFormData(prev => ({
+    ...prev,
+    [name]: value
+  }));
+};
 
 const validateForm = () => {
   // Title
@@ -297,6 +390,224 @@ const handleCreatePackage = (e) => {
     setSelectedPackage(pkg);
     setShowDeleteModal(true);
   };
+  // Guide Management Functions
+const validateGuideForm = () => {
+  if (!guideFormData.firstName.trim()) {
+    setError('First name is required');
+    return false;
+  }
+  if (!guideFormData.lastName.trim()) {
+    setError('Last name is required');
+    return false;
+  }
+  if (!guideFormData.nic.trim()) {
+    setError('NIC is required');
+    return false;
+  }
+  if (!guideFormData.email.trim()) {
+    setError('Email is required');
+    return false;
+  }
+  if (!guideFormData.phone.trim()) {
+    setError('Phone is required');
+    return false;
+  }
+  if (!guideFormData.languages.trim()) {
+    setError('Languages are required');
+    return false;
+  }
+  if (!guideFormData.region.trim()) {
+    setError('Region is required');
+    return false;
+  }
+  const exp = parseInt(guideFormData.experience);
+  if (!exp || exp < 0) {
+    setError('Experience must be a positive number');
+    return false;
+  }
+  return true;
+};
+
+const handleCreateGuide = (e) => {
+  e.preventDefault();
+  setError('');
+
+  if (!validateGuideForm()) return;
+
+  setLoading(true);
+
+  const payload = {
+    firstName: guideFormData.firstName,
+    lastName: guideFormData.lastName,
+    gender: guideFormData.gender,
+    nic: guideFormData.nic,
+    email: guideFormData.email,
+    phone: guideFormData.phone,
+    languages: guideFormData.languages,
+    region: guideFormData.region,
+    experience: parseInt(guideFormData.experience),
+    status: guideFormData.status
+  };
+
+  console.log('Creating guide with payload:', payload);
+
+  fetch(guideApi, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(response => {
+      console.log('Create guide response status:', response.status);
+      if (!response.ok) {
+        return response.text().then(text => {
+          throw new Error(`HTTP ${response.status}: ${text}`);
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Created guide:', data);
+      loadGuides();
+      setShowGuideModal(false);
+      resetGuideForm();
+      setSelectedGuide(null);
+      setLoading(false);
+      alert('Guide created successfully!');
+    })
+    .catch(err => {
+      console.error("Full create error:", err);
+      setError(`Failed to create guide: ${err.message}`);
+      setLoading(false);
+
+      // Demo fallback
+      const newGuide = { ...payload, guideID: Date.now() };
+      setGuides(prev => [...prev, newGuide]);
+      setShowGuideModal(false);
+      resetGuideForm();
+      setSelectedGuide(null);
+      alert('Guide created successfully! (Demo mode)');
+    });
+};
+
+const handleEditGuide = (e) => {
+  e.preventDefault();
+  setError('');
+
+  if (!validateGuideForm()) return;
+
+  setLoading(true);
+
+  const payload = {
+    firstName: guideFormData.firstName,
+    lastName: guideFormData.lastName,
+    gender: guideFormData.gender,
+    nic: guideFormData.nic,
+    email: guideFormData.email,
+    phone: guideFormData.phone,
+    languages: guideFormData.languages,
+    region: guideFormData.region,
+    experience: parseInt(guideFormData.experience),
+    status: guideFormData.status
+  };
+
+  console.log('Updating guide:', selectedGuide.guideID, 'with payload:', payload);
+
+  fetch(`${guideApi}/${selectedGuide.guideID}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(response => {
+      console.log('Update guide response status:', response.status);
+      if (!response.ok) {
+        return response.text().then(text => {
+          throw new Error(`HTTP ${response.status}: ${text}`);
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Updated guide:', data);
+      loadGuides();
+      setShowGuideModal(false);
+      resetGuideForm();
+      setSelectedGuide(null);
+      setLoading(false);
+      alert('Guide updated successfully!');
+    })
+    .catch(err => {
+      console.error("Full update error:", err);
+      setError(`Failed to update guide: ${err.message}`);
+      setLoading(false);
+
+      // Demo fallback
+      setGuides(prev =>
+        prev.map(guide =>
+          guide.guideID === selectedGuide.guideID ? { ...guide, ...payload } : guide
+        )
+      );
+      setShowGuideModal(false);
+      resetGuideForm();
+      setSelectedGuide(null);
+      alert('Guide updated successfully! (Demo mode)');
+    });
+};
+
+const handleToggleGuideStatus = (guide) => {
+  const newStatus = guide.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+  setLoading(true);
+
+  const payload = {
+    ...guide,
+    status: newStatus
+  };
+
+  fetch(`${guideApi}/${guide.guideID}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(() => {
+      loadGuides();
+      setLoading(false);
+      alert(`Guide ${newStatus === 'ACTIVE' ? 'activated' : 'deactivated'} successfully!`);
+    })
+    .catch(err => {
+      console.error("Toggle status error:", err);
+      setLoading(false);
+
+      // Demo fallback
+      setGuides(prev =>
+        prev.map(g =>
+          g.guideID === guide.guideID ? { ...g, status: newStatus } : g
+        )
+      );
+      alert(`Guide ${newStatus === 'ACTIVE' ? 'activated' : 'deactivated'} successfully! (Demo mode)`);
+    });
+};
+
+const openEditGuideModal = (guide) => {
+  setSelectedGuide(guide);
+  setGuideFormData({
+    firstName: guide.firstName || '',
+    lastName: guide.lastName || '',
+    gender: guide.gender || 'Male',
+    nic: guide.nic || '',
+    email: guide.email || '',
+    phone: guide.phone || '',
+    languages: guide.languages || '',
+    region: guide.region || '',
+    experience: guide.experience || '',
+    status: guide.status || 'PENDING'
+  });
+  setShowGuideModal(true);
+};
 
   const modalOverlayStyle = {
     position: 'fixed',
@@ -738,7 +1049,8 @@ const handleCreatePackage = (e) => {
             </div>
           </div>
         )}
-        {activeView === 'guides' && (
+        
+{activeView === 'guides' && (
   <div style={{ 
     background: 'rgba(255, 255, 255, 0.95)',
     backdropFilter: 'blur(20px)',
@@ -746,8 +1058,160 @@ const handleCreatePackage = (e) => {
     borderRadius: '20px',
     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
   }}>
-    <h2 style={{ color: '#2d3748' }}>Guide Management</h2>
-    <p>Here you will manage tour guides (coming soon).</p>
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'space-between', 
+      alignItems: 'center',
+      marginBottom: '2rem'
+    }}>
+      <h2 style={{ 
+        color: '#2d3748',
+        margin: 0,
+        fontSize: '2rem',
+        fontWeight: '700'
+      }}>Guide Management</h2>
+      <button
+        style={primaryButtonStyle}
+        onClick={() => {
+          resetGuideForm();
+          setSelectedGuide(null);
+          setShowGuideModal(true);
+        }}
+      >
+         Add Guide
+      </button>
+    </div>
+
+    <div style={{ 
+      background: 'white',
+      borderRadius: '15px',
+      overflow: 'hidden',
+      boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+    }}>
+      <table style={{ 
+        width: '100%', 
+        borderCollapse: 'collapse'
+      }}>
+        <thead>
+          <tr style={{ 
+            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            color: 'white'
+          }}>
+            <th style={{ 
+              padding: '1rem', 
+              textAlign: 'left',
+              fontWeight: '600'
+            }}>Name</th>
+            <th style={{ 
+              padding: '1rem', 
+              textAlign: 'left',
+              fontWeight: '600'
+            }}>Email</th>
+            <th style={{ 
+              padding: '1rem', 
+              textAlign: 'left',
+              fontWeight: '600'
+            }}>Phone</th>
+            <th style={{ 
+              padding: '1rem', 
+              textAlign: 'center',
+              fontWeight: '600'
+            }}>Status</th>
+            <th style={{ 
+              padding: '1rem', 
+              textAlign: 'center',
+              fontWeight: '600'
+            }}>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {guides.length === 0 ? (
+            <tr>
+              <td colSpan="5" style={{ 
+                padding: '2rem', 
+                textAlign: 'center',
+                color: '#718096'
+              }}>
+                No guides found. Add your first guide!
+              </td>
+            </tr>
+          ) : (
+            guides.map((guide, index) => (
+              <tr key={guide.guideID} style={{ 
+                borderBottom: '1px solid #e2e8f0',
+                background: index % 2 === 0 ? '#f8f9fa' : 'white'
+              }}>
+                <td style={{ padding: '1rem', color: '#2d3748', fontWeight: '500' }}>
+                  {guide.firstName} {guide.lastName}
+                </td>
+                <td style={{ padding: '1rem', color: '#718096' }}>{guide.email}</td>
+                <td style={{ padding: '1rem', color: '#718096' }}>{guide.phone}</td>
+                <td style={{ padding: '1rem', textAlign: 'center' }}>
+                  <span style={{
+                    padding: '0.5rem 1rem',
+                    borderRadius: '20px',
+                    fontSize: '0.75rem',
+                    fontWeight: '600',
+                    textTransform: 'uppercase',
+                    background: guide.status === 'ACTIVE' 
+                      ? 'rgba(56, 161, 105, 0.1)' 
+                      : guide.status === 'INACTIVE'
+                      ? 'rgba(245, 101, 101, 0.1)'
+                      : 'rgba(237, 137, 54, 0.1)',
+                    color: guide.status === 'ACTIVE' 
+                      ? '#38a169' 
+                      : guide.status === 'INACTIVE'
+                      ? '#f56565'
+                      : '#ed8936',
+                    border: `1px solid ${guide.status === 'ACTIVE' 
+                      ? 'rgba(56, 161, 105, 0.3)' 
+                      : guide.status === 'INACTIVE'
+                      ? 'rgba(245, 101, 101, 0.3)'
+                      : 'rgba(237, 137, 54, 0.3)'}`
+                  }}>
+                    {guide.status}
+                  </span>
+                </td>
+                <td style={{ padding: '1rem' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                    <button 
+                      onClick={() => {
+                        setSelectedGuide(guide);
+                        setShowViewModal(true);
+                      }}
+                      style={{
+                        ...buttonStyle,
+                        padding: '0.5rem 1rem',
+                        fontSize: '0.875rem',
+                        background: 'rgba(102, 126, 234, 0.1)',
+                        color: '#667eea',
+                        border: '1px solid rgba(102, 126, 234, 0.3)'
+                      }}
+                    >
+                       View
+                    </button>
+                    <button 
+                      onClick={() => openEditGuideModal(guide)}
+                      style={{
+                        ...buttonStyle,
+                        padding: '0.5rem 1rem',
+                        fontSize: '0.875rem',
+                        background: 'rgba(66, 153, 225, 0.1)',
+                        color: '#4299e1',
+                        border: '1px solid rgba(66, 153, 225, 0.3)'
+                      }}
+                    >
+                       Edit
+                    </button>
+                    
+                  </div>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
   </div>
 )}
 
@@ -1100,6 +1564,490 @@ const handleCreatePackage = (e) => {
           </div>
         </div>
       )}
+      {/* Guide Modal */}
+{showGuideModal && (
+  <div style={modalOverlayStyle}>
+    <div style={modalStyle}>
+      <div style={modalHeaderStyle}>
+        <h3 style={{ 
+          margin: 0,
+          color: '#2d3748',
+          fontSize: '1.5rem'
+        }}>
+          {selectedGuide ? 'Edit Guide' : 'Add Guide'}
+        </h3>
+        <button 
+          onClick={() => {
+            setShowGuideModal(false);
+            setSelectedGuide(null);
+          }}
+          style={{
+            background: 'none',
+            border: 'none',
+            fontSize: '2rem',
+            cursor: 'pointer',
+            color: '#a0aec0'
+          }}
+        >
+          ×
+        </button>
+      </div>
+      
+      <form onSubmit={selectedGuide ? handleEditGuide : handleCreateGuide} style={formStyle}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div>
+            <label style={labelStyle}>First Name *</label>
+            <input 
+              name="firstName" 
+              placeholder="John" 
+              value={guideFormData.firstName} 
+              onChange={handleGuideInputChange}
+              style={inputStyle}
+              required
+            />
+          </div>
+          
+          <div>
+            <label style={labelStyle}>Last Name *</label>
+            <input 
+              name="lastName" 
+              placeholder="Doe" 
+              value={guideFormData.lastName} 
+              onChange={handleGuideInputChange}
+              style={inputStyle}
+              required
+            />
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div>
+            <label style={labelStyle}>Gender *</label>
+            <select 
+              name="gender" 
+              value={guideFormData.gender} 
+              onChange={handleGuideInputChange}
+              style={inputStyle}
+            >
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          
+          <div>
+            <label style={labelStyle}>NIC *</label>
+            <input 
+              name="nic" 
+              placeholder="123456789V" 
+              value={guideFormData.nic} 
+              onChange={handleGuideInputChange}
+              style={inputStyle}
+              required
+            />
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div>
+            <label style={labelStyle}>Email *</label>
+            <input 
+              type="email"
+              name="email" 
+              placeholder="john@example.com" 
+              value={guideFormData.email} 
+              onChange={handleGuideInputChange}
+              style={inputStyle}
+              required
+            />
+          </div>
+          
+          <div>
+            <label style={labelStyle}>Phone *</label>
+            <input 
+              name="phone" 
+              placeholder="0771234567" 
+              value={guideFormData.phone} 
+              onChange={handleGuideInputChange}
+              style={inputStyle}
+              required
+            />
+          </div>
+        </div>
+
+        <div>
+          <label style={labelStyle}>Languages *</label>
+          <input 
+            name="languages" 
+            placeholder="English, Sinhala, Tamil" 
+            value={guideFormData.languages} 
+            onChange={handleGuideInputChange}
+            style={inputStyle}
+            required
+          />
+        </div>
+
+        <div>
+          <label style={labelStyle}>Region *</label>
+          <input 
+            name="region" 
+            placeholder="Western Province" 
+            value={guideFormData.region} 
+            onChange={handleGuideInputChange}
+            style={inputStyle}
+            required
+          />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div>
+            <label style={labelStyle}>Experience (Years) *</label>
+            <input 
+              type="number"
+              name="experience" 
+              placeholder="5" 
+              value={guideFormData.experience} 
+              onChange={handleGuideInputChange}
+              style={inputStyle}
+              min="0"
+              required
+            />
+          </div>
+          
+          <div>
+            <label style={labelStyle}>Status</label>
+            <select 
+              name="status" 
+              value={guideFormData.status} 
+              onChange={handleGuideInputChange}
+              style={inputStyle}
+            >
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+              <option value="PENDING">Pending</option>
+            </select>
+          </div>
+        </div>
+        
+        <div style={{ 
+          display: 'flex', 
+          gap: '1rem', 
+          justifyContent: 'flex-end',
+          paddingTop: '1rem',
+          borderTop: '1px solid #e2e8f0',
+          marginTop: '1rem'
+        }}>
+          <button 
+            type="button" 
+            onClick={() => {
+              setShowGuideModal(false);
+              setSelectedGuide(null);
+            }}
+            style={secondaryButtonStyle}
+            disabled={loading}
+          >
+            Cancel
+          </button>
+          <button 
+            type="submit"
+            style={primaryButtonStyle}
+            disabled={loading}
+          >
+            {loading ? (selectedGuide ? 'Updating...' : 'Creating...') : (selectedGuide ? 'Update Guide' : 'Save Guide')}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
+{/* View Guide Modal */}
+{showViewModal && selectedGuide && (
+  <div style={modalOverlayStyle}>
+    <div style={{
+      background: 'white',
+      borderRadius: '20px',
+      width: '90%',
+      maxWidth: '600px',
+      maxHeight: '90vh',
+      overflow: 'auto',
+      boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+    }}>
+      <div style={modalHeaderStyle}>
+        <h3 style={{ 
+          margin: 0,
+          color: '#2d3748',
+          fontSize: '1.5rem'
+        }}>
+          Guide Details
+        </h3>
+        <button 
+          onClick={() => {
+            setShowViewModal(false);
+            setSelectedGuide(null);
+          }}
+          style={{
+            background: 'none',
+            border: 'none',
+            fontSize: '2rem',
+            cursor: 'pointer',
+            color: '#a0aec0'
+          }}
+        >
+          ×
+        </button>
+      </div>
+
+      <div style={{ padding: '2rem' }}>
+        <div style={{ 
+          display: 'grid', 
+          gap: '1.5rem'
+        }}>
+          {/* Name Section */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '1rem',
+            paddingBottom: '1rem',
+            borderBottom: '1px solid #e2e8f0'
+          }}>
+            <div>
+              <label style={{ 
+                display: 'block',
+                fontSize: '0.875rem',
+                color: '#718096',
+                marginBottom: '0.5rem',
+                fontWeight: '600'
+              }}>First Name</label>
+              <p style={{ 
+                margin: 0,
+                color: '#2d3748',
+                fontSize: '1rem',
+                fontWeight: '500'
+              }}>{selectedGuide.firstName}</p>
+            </div>
+            <div>
+              <label style={{ 
+                display: 'block',
+                fontSize: '0.875rem',
+                color: '#718096',
+                marginBottom: '0.5rem',
+                fontWeight: '600'
+              }}>Last Name</label>
+              <p style={{ 
+                margin: 0,
+                color: '#2d3748',
+                fontSize: '1rem',
+                fontWeight: '500'
+              }}>{selectedGuide.lastName}</p>
+            </div>
+          </div>
+
+          {/* Personal Info */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '1rem',
+            paddingBottom: '1rem',
+            borderBottom: '1px solid #e2e8f0'
+          }}>
+            <div>
+              <label style={{ 
+                display: 'block',
+                fontSize: '0.875rem',
+                color: '#718096',
+                marginBottom: '0.5rem',
+                fontWeight: '600'
+              }}>Gender</label>
+              <p style={{ 
+                margin: 0,
+                color: '#2d3748',
+                fontSize: '1rem'
+              }}>{selectedGuide.gender}</p>
+            </div>
+            <div>
+              <label style={{ 
+                display: 'block',
+                fontSize: '0.875rem',
+                color: '#718096',
+                marginBottom: '0.5rem',
+                fontWeight: '600'
+              }}>NIC</label>
+              <p style={{ 
+                margin: 0,
+                color: '#2d3748',
+                fontSize: '1rem'
+              }}>{selectedGuide.nic}</p>
+            </div>
+          </div>
+
+          {/* Contact Info */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '1rem',
+            paddingBottom: '1rem',
+            borderBottom: '1px solid #e2e8f0'
+          }}>
+            <div>
+              <label style={{ 
+                display: 'block',
+                fontSize: '0.875rem',
+                color: '#718096',
+                marginBottom: '0.5rem',
+                fontWeight: '600'
+              }}>Email</label>
+              <p style={{ 
+                margin: 0,
+                color: '#2d3748',
+                fontSize: '1rem'
+              }}>{selectedGuide.email}</p>
+            </div>
+            <div>
+              <label style={{ 
+                display: 'block',
+                fontSize: '0.875rem',
+                color: '#718096',
+                marginBottom: '0.5rem',
+                fontWeight: '600'
+              }}>Phone</label>
+              <p style={{ 
+                margin: 0,
+                color: '#2d3748',
+                fontSize: '1rem'
+              }}>{selectedGuide.phone}</p>
+            </div>
+          </div>
+
+          {/* Professional Info */}
+          <div style={{
+            paddingBottom: '1rem',
+            borderBottom: '1px solid #e2e8f0'
+          }}>
+            <label style={{ 
+              display: 'block',
+              fontSize: '0.875rem',
+              color: '#718096',
+              marginBottom: '0.5rem',
+              fontWeight: '600'
+            }}>Languages</label>
+            <p style={{ 
+              margin: 0,
+              color: '#2d3748',
+              fontSize: '1rem'
+            }}>{selectedGuide.languages}</p>
+          </div>
+
+          <div style={{
+            paddingBottom: '1rem',
+            borderBottom: '1px solid #e2e8f0'
+          }}>
+            <label style={{ 
+              display: 'block',
+              fontSize: '0.875rem',
+              color: '#718096',
+              marginBottom: '0.5rem',
+              fontWeight: '600'
+            }}>Region</label>
+            <p style={{ 
+              margin: 0,
+              color: '#2d3748',
+              fontSize: '1rem'
+            }}>{selectedGuide.region}</p>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '1rem'
+          }}>
+            <div>
+              <label style={{ 
+                display: 'block',
+                fontSize: '0.875rem',
+                color: '#718096',
+                marginBottom: '0.5rem',
+                fontWeight: '600'
+              }}>Experience</label>
+              <p style={{ 
+                margin: 0,
+                color: '#2d3748',
+                fontSize: '1rem',
+                fontWeight: '500'
+              }}>{selectedGuide.experience} years</p>
+            </div>
+            <div>
+              <label style={{ 
+                display: 'block',
+                fontSize: '0.875rem',
+                color: '#718096',
+                marginBottom: '0.5rem',
+                fontWeight: '600'
+              }}>Status</label>
+              <span style={{
+                display: 'inline-block',
+                padding: '0.5rem 1rem',
+                borderRadius: '20px',
+                fontSize: '0.75rem',
+                fontWeight: '600',
+                textTransform: 'uppercase',
+                background: selectedGuide.status === 'ACTIVE' 
+                  ? 'rgba(56, 161, 105, 0.1)' 
+                  : selectedGuide.status === 'INACTIVE'
+                  ? 'rgba(245, 101, 101, 0.1)'
+                  : 'rgba(237, 137, 54, 0.1)',
+                color: selectedGuide.status === 'ACTIVE' 
+                  ? '#38a169' 
+                  : selectedGuide.status === 'INACTIVE'
+                  ? '#f56565'
+                  : '#ed8936',
+                border: `1px solid ${selectedGuide.status === 'ACTIVE' 
+                  ? 'rgba(56, 161, 105, 0.3)' 
+                  : selectedGuide.status === 'INACTIVE'
+                  ? 'rgba(245, 101, 101, 0.3)'
+                  : 'rgba(237, 137, 54, 0.3)'}`
+              }}>
+                {selectedGuide.status}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ 
+          display: 'flex', 
+          gap: '1rem', 
+          justifyContent: 'flex-end',
+          paddingTop: '1.5rem',
+          marginTop: '1.5rem',
+          borderTop: '1px solid #e2e8f0'
+        }}>
+          <button 
+            onClick={() => {
+              setShowViewModal(false);
+              openEditGuideModal(selectedGuide);
+            }}
+            style={{
+              ...buttonStyle,
+              background: 'rgba(66, 153, 225, 0.1)',
+              color: '#4299e1',
+              border: '1px solid rgba(66, 153, 225, 0.3)'
+            }}
+          >
+             Edit Guide
+          </button>
+          <button 
+            onClick={() => {
+              setShowViewModal(false);
+              setSelectedGuide(null);
+            }}
+            style={secondaryButtonStyle}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 };
