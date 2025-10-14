@@ -20,35 +20,37 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
 
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(c -> {
-                })
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> {})  // Enable CORS
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/packages/**").permitAll() // allow anyone
-                        .requestMatchers("/api/manager/dashboard/**").hasRole("GENERAL_MANAGER")
+                        .requestMatchers("/api/auth/**").permitAll() // allow login/register
+                        .requestMatchers("/api/packages/**").permitAll() // public packages
+
+                        // guides - accessible to STC
+                        .requestMatchers("/api/guides/**").hasRole("SENIOR_TRAVEL_CONSULTANT")
+
+                        // role-based dashboards
+                        .requestMatchers("/api/manager/**").hasRole("GENERAL_MANAGER")
                         .requestMatchers("/api/consultant/**").hasRole("SENIOR_TRAVEL_CONSULTANT")
                         .requestMatchers("/api/customer-service/**").hasRole("CUSTOMER_SERVICE_EXECUTIVE")
                         .requestMatchers("/api/marketing/**").hasRole("MARKETING_MANAGER")
 
-                        .requestMatchers("/api/admin/**").hasAnyRole(
-                                "GENERAL_MANAGER",
-                                "SENIOR_TRAVEL_CONSULTANT",
-                                "CUSTOMER_SERVICE_EXECUTIVE",
-                                "MARKETING_MANAGER")
+                        // everything else requires authentication
+                        .anyRequest().authenticated()
+                )
 
-                        .anyRequest().authenticated())
-
-                .sessionManagement(sess -> sess
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -63,11 +65,15 @@ public class SecurityConfig {
     @Bean
     org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
         var cfg = new org.springframework.web.cors.CorsConfiguration();
+        cfg.setAllowCredentials(true);
         cfg.setAllowedOrigins(java.util.List.of("http://localhost:3000"));
         cfg.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        cfg.setAllowedHeaders(java.util.List.of("Authorization", "Content-Type"));
+        cfg.setAllowedHeaders(java.util.List.of("Authorization", "Content-Type", "Accept"));
+        cfg.setExposedHeaders(java.util.List.of("Authorization")); // allow browser to read token if needed
+
         var source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", cfg);
         return source;
     }
+
 }

@@ -50,9 +50,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return path.startsWith("/api/auth/admin/login"); // skip login
+        // Skip only login and refresh endpoints
+        return path.equals("/api/auth/admin/login") || path.equals("/api/auth/refresh");
     }
+
+
+
 }
