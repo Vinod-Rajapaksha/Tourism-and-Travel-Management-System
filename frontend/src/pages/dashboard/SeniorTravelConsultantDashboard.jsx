@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import api from "../../services/api";
+
 
 const SeniorTravelConsultantDashboard = () => {
   const [activeView, setActiveView] = useState('dashboard');
@@ -28,18 +30,25 @@ const [selectedGuide, setSelectedGuide] = useState(null);
 const [guideFormData, setGuideFormData] = useState({
   firstName: '',
   lastName: '',
-  gender: 'Male',
+  gender: 'MALE',
   nic: '',
   email: '',
   phone: '',
-  languages: '',
-  region: '',
-  experience: '',
+  password: '',
   status: 'PENDING'
 });
-
-  const api = "http://localhost:8080/api/packages";
-  const guideApi = "http://localhost:8080/api/guides";  
+useEffect(() => {
+  // Debug: Check token
+  const token = localStorage.getItem('token');
+  console.log('Token:', token);
+  
+  if (token) {
+    // Decode JWT to see payload
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    console.log('Token payload:', payload);
+  }
+}, []);
+   
 
   useEffect(() => {
     loadPackages();
@@ -47,89 +56,36 @@ const [guideFormData, setGuideFormData] = useState({
   }, []);
 
   const loadPackages = () => {
-    setLoading(true);
-    setError('');
-    
-    fetch(api)
-      .then(response => {
-        console.log('Load packages response status:', response.status);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log('Loaded packages:', data);
-        setPackages(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Error fetching packages:", err);
-        setError(`Failed to load packages: ${err.message}`);
-        setLoading(false);
-        // Demo data fallback
-        setPackages([
-          {
-            packageID: 1,
-            title: 'Sample Package',
-            description: 'A sample travel package',
-            price: 1000,
-            offer: 800,
-            status: 'ACTIVE',
-            image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=300'
-          }
-        ]);
-      });
-  };
-
-  const loadGuides = () => {
   setLoading(true);
+  setError('');
   
-  fetch(guideApi)
+  api.get('/packages')
     .then(response => {
-      console.log('Load guides response status:', response.status);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return response.json();
+      console.log('Loaded packages:', response.data);
+      setPackages(response.data);
+      setLoading(false);
     })
-    .then(data => {
-      console.log('Loaded guides:', data);
-      setGuides(data);
+    .catch(err => {
+      console.error("Error fetching packages:", err);
+      setError(`Failed to load packages: ${err.message}`);
+      setLoading(false);
+    });
+};
+
+const loadGuides = () => {
+  setLoading(true);
+  setError('');
+  
+  api.get("/guides")
+    .then(res => {
+      console.log("Loaded guides:", res.data);
+      setGuides(res.data);
       setLoading(false);
     })
     .catch(err => {
       console.error("Error fetching guides:", err);
+      setError(`Failed to load guides: ${err.message}`);
       setLoading(false);
-      // Demo data fallback
-      setGuides([
-        {
-          guideID: 1,
-          firstName: 'John',
-          lastName: 'Doe',
-          gender: 'Male',
-          nic: '123456789V',
-          email: 'john@gmail.com',
-          phone: '0771234567',
-          languages: 'English, Sinhala',
-          region: 'Western Province',
-          experience: 5,
-          status: 'ACTIVE'
-        },
-        {
-          guideID: 2,
-          firstName: 'Jane',
-          lastName: 'Smith',
-          gender: 'Female',
-          nic: '987654321V',
-          email: 'jane@gmail.com',
-          phone: '0779876543',
-          languages: 'English, Tamil',
-          region: 'Northern Province',
-          experience: 3,
-          status: 'PENDING'
-        }
-      ]);
     });
 };
 
@@ -149,13 +105,11 @@ const [guideFormData, setGuideFormData] = useState({
   setGuideFormData({
     firstName: '',
     lastName: '',
-    gender: 'Male',
+    gender: 'MALE',
     nic: '',
     email: '',
     phone: '',
-    languages: '',
-    region: '',
-    experience: '',
+    password: '',
     status: 'PENDING'
   });
   setError('');
@@ -223,7 +177,6 @@ const handleCreatePackage = (e) => {
   setLoading(true);
 
   const price = parseFloat(formData.price);
-  // Fix: check if offer is empty string or if it can't be parsed
   const offerValue = formData.offer === '' || formData.offer === null 
     ? price 
     : parseFloat(formData.offer);
@@ -234,27 +187,14 @@ const handleCreatePackage = (e) => {
     description: formData.description,
     status: formData.status,
     price: price,
-    offer: offerValue  // using the computed value
+    offer: offerValue
   };
 
   console.log('Creating package with payload:', payload);
 
-  fetch(api, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  })
+  api.post('/packages', payload)
     .then(response => {
-      console.log('Create response status:', response.status);
-      if (!response.ok) {
-        return response.text().then(text => {
-          throw new Error(`HTTP ${response.status}: ${text}`);
-        });
-      }
-      return response.json();
-    })
-    .then(data => {
-      console.log('Created package:', data);
+      console.log('Created package:', response.data);
       loadPackages();
       setShowCreateModal(false);
       resetForm();
@@ -265,18 +205,11 @@ const handleCreatePackage = (e) => {
       console.error("Full create error:", err);
       setError(`Failed to create package: ${err.message}`);
       setLoading(false);
-
-      // Demo fallback
-      const newPackage = { ...payload, packageID: Date.now() };
-      setPackages(prev => [...prev, newPackage]);
-      setShowCreateModal(false);
-      resetForm();
-      alert('Package created successfully! (Demo mode)');
     });
 };
 
 
-  const handleEditPackage = (e) => {
+const handleEditPackage = (e) => {
   e.preventDefault();
   setError('');
 
@@ -287,7 +220,6 @@ const handleCreatePackage = (e) => {
   const price = parseFloat(formData.price);
   const offer = formData.offer === '' ? price : parseFloat(formData.offer);
 
-  //  build clean payload
   const payload = {
     image: formData.image,
     title: formData.title,
@@ -299,22 +231,9 @@ const handleCreatePackage = (e) => {
 
   console.log('Updating package:', selectedPackage.packageID, 'with payload:', payload);
 
-  fetch(`${api}/${selectedPackage.packageID}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  })
+  api.put(`/packages/${selectedPackage.packageID}`, payload)
     .then(response => {
-      console.log('Update response status:', response.status);
-      if (!response.ok) {
-        return response.text().then(text => {
-          throw new Error(`HTTP ${response.status}: ${text}`);
-        });
-      }
-      return response.json();
-    })
-    .then(data => {
-      console.log('Updated package:', data);
+      console.log('Updated package:', response.data);
       loadPackages();
       setShowEditModal(false);
       resetForm();
@@ -326,52 +245,30 @@ const handleCreatePackage = (e) => {
       console.error("Full update error:", err);
       setError(`Failed to update package: ${err.message}`);
       setLoading(false);
-
-      // Demo fallback
-      setPackages(prev =>
-        prev.map(pkg =>
-          pkg.packageID === selectedPackage.packageID ? { ...pkg, ...payload } : pkg
-        )
-      );
-      setShowEditModal(false);
-      resetForm();
-      setSelectedPackage(null);
-      alert('Package updated successfully! (Demo mode)');
     });
 };
 
 
   const handleDeletePackage = () => {
-    setLoading(true);
-    
-    console.log('Deleting package:', selectedPackage.packageID);
-    
-    fetch(`${api}/${selectedPackage.packageID}`, {
-      method: 'DELETE'
+  setLoading(true);
+  
+  console.log('Deleting package:', selectedPackage.packageID);
+  
+  api.delete(`/packages/${selectedPackage.packageID}`)
+    .then(response => {
+      console.log('Delete response:', response.data);
+      loadPackages();
+      setShowDeleteModal(false);
+      setSelectedPackage(null);
+      setLoading(false);
+      alert('Package deleted successfully!');
     })
-      .then(response => {
-        console.log('Delete response status:', response.status);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        loadPackages();
-        setShowDeleteModal(false);
-        setSelectedPackage(null);
-        setLoading(false);
-        alert('Package deleted successfully!');
-      })
-      .catch(err => {
-        console.error("Full delete error:", err);
-        setError(`Failed to delete package: ${err.message}`);
-        setLoading(false);
-        
-        // Demo fallback
-        setPackages(prev => prev.filter(pkg => pkg.packageID !== selectedPackage.packageID));
-        setShowDeleteModal(false);
-        setSelectedPackage(null);
-        alert('Package deleted successfully! (Demo mode)');
-      });
-  };
+    .catch(err => {
+      console.error("Full delete error:", err);
+      setError(`Failed to delete package: ${err.message}`);
+      setLoading(false);
+    });
+};
 
   const openEditModal = (pkg) => {
     setSelectedPackage(pkg);
@@ -412,19 +309,10 @@ const validateGuideForm = () => {
     setError('Phone is required');
     return false;
   }
-  if (!guideFormData.languages.trim()) {
-    setError('Languages are required');
-    return false;
-  }
-  if (!guideFormData.region.trim()) {
-    setError('Region is required');
-    return false;
-  }
-  const exp = parseInt(guideFormData.experience);
-  if (!exp || exp < 0) {
-    setError('Experience must be a positive number');
-    return false;
-  }
+  if (!guideFormData.password.trim()) {
+  setError('Password is required');
+  return false;
+}
   return true;
 };
 
@@ -443,37 +331,22 @@ const handleCreateGuide = (e) => {
     nic: guideFormData.nic,
     email: guideFormData.email,
     phone: guideFormData.phone,
-    languages: guideFormData.languages,
-    region: guideFormData.region,
-    experience: parseInt(guideFormData.experience),
+    password: guideFormData.password,
     status: guideFormData.status
   };
 
   console.log('Creating guide with payload:', payload);
 
-  fetch(guideApi, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+  api.post("/guides", payload)
+  .then(res => {
+    console.log('Created guide:', res.data);
+    loadGuides();
+    setShowGuideModal(false);
+    resetGuideForm();
+    setSelectedGuide(null);
+    setLoading(false);
+    alert('Guide created successfully!');
   })
-    .then(response => {
-      console.log('Create guide response status:', response.status);
-      if (!response.ok) {
-        return response.text().then(text => {
-          throw new Error(`HTTP ${response.status}: ${text}`);
-        });
-      }
-      return response.json();
-    })
-    .then(data => {
-      console.log('Created guide:', data);
-      loadGuides();
-      setShowGuideModal(false);
-      resetGuideForm();
-      setSelectedGuide(null);
-      setLoading(false);
-      alert('Guide created successfully!');
-    })
     .catch(err => {
       console.error("Full create error:", err);
       setError(`Failed to create guide: ${err.message}`);
@@ -504,53 +377,22 @@ const handleEditGuide = (e) => {
     nic: guideFormData.nic,
     email: guideFormData.email,
     phone: guideFormData.phone,
-    languages: guideFormData.languages,
-    region: guideFormData.region,
-    experience: parseInt(guideFormData.experience),
+    password: guideFormData.password ||selectedGuide.password ,
     status: guideFormData.status
   };
 
   console.log('Updating guide:', selectedGuide.guideID, 'with payload:', payload);
 
-  fetch(`${guideApi}/${selectedGuide.guideID}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+  api.put(`/guides/${selectedGuide.guideID}`, payload)
+  .then(res => {
+    console.log('Updated guide:', res.data);
+    loadGuides();
+    setShowGuideModal(false);
+    resetGuideForm();
+    setSelectedGuide(null);
+    setLoading(false);
+    alert('Guide updated successfully!');
   })
-    .then(response => {
-      console.log('Update guide response status:', response.status);
-      if (!response.ok) {
-        return response.text().then(text => {
-          throw new Error(`HTTP ${response.status}: ${text}`);
-        });
-      }
-      return response.json();
-    })
-    .then(data => {
-      console.log('Updated guide:', data);
-      loadGuides();
-      setShowGuideModal(false);
-      resetGuideForm();
-      setSelectedGuide(null);
-      setLoading(false);
-      alert('Guide updated successfully!');
-    })
-    .catch(err => {
-      console.error("Full update error:", err);
-      setError(`Failed to update guide: ${err.message}`);
-      setLoading(false);
-
-      // Demo fallback
-      setGuides(prev =>
-        prev.map(guide =>
-          guide.guideID === selectedGuide.guideID ? { ...guide, ...payload } : guide
-        )
-      );
-      setShowGuideModal(false);
-      resetGuideForm();
-      setSelectedGuide(null);
-      alert('Guide updated successfully! (Demo mode)');
-    });
 };
 
 const handleToggleGuideStatus = (guide) => {
@@ -562,33 +404,17 @@ const handleToggleGuideStatus = (guide) => {
     status: newStatus
   };
 
-  fetch(`${guideApi}/${guide.guideID}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  })
+  api.put(`/guides/${guide.guideID}`, payload)
     .then(response => {
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return response.json();
-    })
-    .then(() => {
+      console.log('Toggle status response:', response.data);
       loadGuides();
       setLoading(false);
       alert(`Guide ${newStatus === 'ACTIVE' ? 'activated' : 'deactivated'} successfully!`);
     })
     .catch(err => {
       console.error("Toggle status error:", err);
+      setError(`Failed to toggle status: ${err.message}`);
       setLoading(false);
-
-      // Demo fallback
-      setGuides(prev =>
-        prev.map(g =>
-          g.guideID === guide.guideID ? { ...g, status: newStatus } : g
-        )
-      );
-      alert(`Guide ${newStatus === 'ACTIVE' ? 'activated' : 'deactivated'} successfully! (Demo mode)`);
     });
 };
 
@@ -597,18 +423,15 @@ const openEditGuideModal = (guide) => {
   setGuideFormData({
     firstName: guide.firstName || '',
     lastName: guide.lastName || '',
-    gender: guide.gender || 'Male',
+    gender: guide.gender || 'MALE',  // Changed from 'Male'
     nic: guide.nic || '',
     email: guide.email || '',
     phone: guide.phone || '',
-    languages: guide.languages || '',
-    region: guide.region || '',
-    experience: guide.experience || '',
+    password: '',  // Leave empty for edit
     status: guide.status || 'PENDING'
   });
   setShowGuideModal(true);
 };
-
   const modalOverlayStyle = {
     position: 'fixed',
     inset: 0,
@@ -1624,15 +1447,15 @@ const openEditGuideModal = (guide) => {
           <div>
             <label style={labelStyle}>Gender *</label>
             <select 
-              name="gender" 
-              value={guideFormData.gender} 
-              onChange={handleGuideInputChange}
-              style={inputStyle}
-            >
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
+  name="gender" 
+  value={guideFormData.gender} 
+  onChange={handleGuideInputChange}
+  style={inputStyle}
+>
+  <option value="MALE">Male</option>
+  <option value="FEMALE">Female</option>
+  <option value="OTHER">Other</option>
+</select>
           </div>
           
           <div>
@@ -1674,45 +1497,23 @@ const openEditGuideModal = (guide) => {
             />
           </div>
         </div>
+            <div>
+  <label style={labelStyle}>Password *</label>
+  <input 
+    type="password"
+    name="password"
+    placeholder="Enter temporary password"
+    value={guideFormData.password}
+    onChange={handleGuideInputChange}
+    style={inputStyle}
+    required
+  />
+</div>
 
-        <div>
-          <label style={labelStyle}>Languages *</label>
-          <input 
-            name="languages" 
-            placeholder="English, Sinhala, Tamil" 
-            value={guideFormData.languages} 
-            onChange={handleGuideInputChange}
-            style={inputStyle}
-            required
-          />
-        </div>
+        
 
-        <div>
-          <label style={labelStyle}>Region *</label>
-          <input 
-            name="region" 
-            placeholder="Western Province" 
-            value={guideFormData.region} 
-            onChange={handleGuideInputChange}
-            style={inputStyle}
-            required
-          />
-        </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-          <div>
-            <label style={labelStyle}>Experience (Years) *</label>
-            <input 
-              type="number"
-              name="experience" 
-              placeholder="5" 
-              value={guideFormData.experience} 
-              onChange={handleGuideInputChange}
-              style={inputStyle}
-              min="0"
-              required
-            />
-          </div>
           
           <div>
             <label style={labelStyle}>Status</label>
@@ -1917,64 +1718,22 @@ const openEditGuideModal = (guide) => {
               }}>{selectedGuide.phone}</p>
             </div>
           </div>
+          <div>
+  <label style={{ 
+    display: 'block',
+    fontSize: '0.875rem',
+    color: '#718096',
+    marginBottom: '0.5rem',
+    fontWeight: '600'
+  }}>Password</label>
+  <p style={{
+    margin: 0,
+    color: '#2d3748',
+    fontSize: '1rem',
+    letterSpacing: '3px'
+  }}>••••••••</p>
+</div>
 
-          {/* Professional Info */}
-          <div style={{
-            paddingBottom: '1rem',
-            borderBottom: '1px solid #e2e8f0'
-          }}>
-            <label style={{ 
-              display: 'block',
-              fontSize: '0.875rem',
-              color: '#718096',
-              marginBottom: '0.5rem',
-              fontWeight: '600'
-            }}>Languages</label>
-            <p style={{ 
-              margin: 0,
-              color: '#2d3748',
-              fontSize: '1rem'
-            }}>{selectedGuide.languages}</p>
-          </div>
-
-          <div style={{
-            paddingBottom: '1rem',
-            borderBottom: '1px solid #e2e8f0'
-          }}>
-            <label style={{ 
-              display: 'block',
-              fontSize: '0.875rem',
-              color: '#718096',
-              marginBottom: '0.5rem',
-              fontWeight: '600'
-            }}>Region</label>
-            <p style={{ 
-              margin: 0,
-              color: '#2d3748',
-              fontSize: '1rem'
-            }}>{selectedGuide.region}</p>
-          </div>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '1rem'
-          }}>
-            <div>
-              <label style={{ 
-                display: 'block',
-                fontSize: '0.875rem',
-                color: '#718096',
-                marginBottom: '0.5rem',
-                fontWeight: '600'
-              }}>Experience</label>
-              <p style={{ 
-                margin: 0,
-                color: '#2d3748',
-                fontSize: '1rem',
-                fontWeight: '500'
-              }}>{selectedGuide.experience} years</p>
-            </div>
             <div>
               <label style={{ 
                 display: 'block',
@@ -2046,7 +1805,7 @@ const openEditGuideModal = (guide) => {
         </div>
       </div>
     </div>
-  </div>
+  
 )}
     </div>
   );
