@@ -51,6 +51,4 @@ public class Guide {
     @CreationTimestamp
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "guide", cascade = CascadeType.ALL)
-    private List<Reservation> reservations;
 }
