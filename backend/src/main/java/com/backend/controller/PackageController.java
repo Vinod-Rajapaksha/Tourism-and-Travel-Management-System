@@ -112,6 +112,8 @@ public class PackageController {
                 return ResponseEntity.notFound().build();
             }
 
+            Packages existingPackage = existingPackageOptional.get();
+
             // Validation
             if (pkg.getTitle() == null || pkg.getTitle().trim().isEmpty()) {
                 System.err.println("Title is required");
@@ -121,21 +123,29 @@ public class PackageController {
                 System.err.println("Valid price is required");
                 return ResponseEntity.badRequest().build();
             }
-            if (pkg.getOffer() != null && pkg.getPrice() != null && pkg.getOffer().compareTo(pkg.getPrice()) <= 0) {
+            // Validate offer (should be less than or equal to price, and greater than zero)
+            if (pkg.getOffer() == null || pkg.getOffer().compareTo(BigDecimal.ZERO) <= 0) {
                 System.err.println("Valid offer is required");
                 return ResponseEntity.badRequest().build();
             }
-
-            // Set the ID to ensure we're updating the correct entity
-            pkg.setPackageID(id);
-
-            // Set default status if not provided
-            if (pkg.getStatus() == null || pkg.getStatus().trim().isEmpty()) {
-                pkg.setStatus("ACTIVE");
+            if (pkg.getOffer().compareTo(pkg.getPrice()) > 0) {
+                System.err.println("Offer cannot be greater than price");
+                return ResponseEntity.badRequest().build();
             }
 
+            // Update only the fields that should change
+            existingPackage.setTitle(pkg.getTitle());
+            existingPackage.setDescription(pkg.getDescription());
+            existingPackage.setPrice(pkg.getPrice());
+            existingPackage.setOffer(pkg.getOffer());
+            existingPackage.setImage(pkg.getImage());
+            existingPackage.setStatus(pkg.getStatus() != null && !pkg.getStatus().trim().isEmpty()
+                    ? pkg.getStatus()
+                    : "ACTIVE");
+            // DON'T update packageID or createdAt - they should remain unchanged
+
             System.out.println("Attempting to update package...");
-            Packages updatedPackage = packageRepository.save(pkg);
+            Packages updatedPackage = packageRepository.save(existingPackage);
             System.out.println("Successfully updated package: " + updatedPackage);
 
             return ResponseEntity.ok(updatedPackage);

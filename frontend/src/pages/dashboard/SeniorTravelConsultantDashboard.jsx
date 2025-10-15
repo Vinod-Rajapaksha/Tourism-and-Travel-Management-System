@@ -1183,7 +1183,7 @@ const openEditGuideModal = (guide) => {
                 >
                   <option value="ACTIVE">Active</option>
                   <option value="INACTIVE">Inactive</option>
-                  <option value="DRAFT">Draft</option>
+                  
                 </select>
               </div>
               
@@ -1320,7 +1320,7 @@ const openEditGuideModal = (guide) => {
                 >
                   <option value="ACTIVE">Active</option>
                   <option value="INACTIVE">Inactive</option>
-                  <option value="DRAFT">Draft</option>
+                  
                 </select>
               </div>
               
