@@ -798,22 +798,32 @@ const openEditGuideModal = (guide) => {
                       lineHeight: '1.5'
                     }}>{pkg.description}</p>
                     <div style={{ 
-                      display: 'flex', 
-                      gap: '1rem', 
-                      marginBottom: '1rem',
-                      alignItems: 'center'
-                    }}>
-                      <span style={{ 
-                        textDecoration: 'line-through',
-                        color: '#a0aec0',
-                        fontSize: '1.1rem'
-                      }}>${pkg.price}</span>
-                      <span style={{ 
-                        color: '#38a169',
-                        fontWeight: '700',
-                        fontSize: '1.3rem'
-                      }}>${pkg.offer}</span>
-                    </div>
+  display: 'flex', 
+  gap: '1rem', 
+  marginBottom: '1rem',
+  alignItems: 'center'
+}}>
+  {pkg.offer && pkg.offer !== pkg.price ? (
+    <>
+      <span style={{ 
+        textDecoration: 'line-through',
+        color: '#a0aec0',
+        fontSize: '1.1rem'
+      }}>${pkg.price}</span>
+      <span style={{ 
+        color: '#38a169',
+        fontWeight: '700',
+        fontSize: '1.3rem'
+      }}>${pkg.offer}</span>
+    </>
+  ) : (
+    <span style={{ 
+      color: '#2d3748',
+      fontWeight: '700',
+      fontSize: '1.3rem'
+    }}>${pkg.price}</span>
+  )}
+</div>
                     <div style={{ marginBottom: '1.5rem' }}>
                       <span style={{
                         padding: '0.5rem 1rem',
@@ -1146,20 +1156,21 @@ const openEditGuideModal = (guide) => {
                 </div>
                 
                 <div>
-                  <label style={labelStyle}>Offer Price *</label>
-                  <input 
-                    type="number" 
-                    name="offer" 
-                    placeholder="800" 
-                    value={formData.offer} 
-                    onChange={handleInputChange}
-                    style={inputStyle}
-                    min="0"
-                    step="0.01"
-                  
-                  />
-                   {formErrors.offer && <p style={{ color: "red", fontSize: "0.85rem" }}>{formErrors.offer}</p>}
-                </div>
+  <label style={labelStyle}>Offer Price (Optional)</label>
+  <input 
+    type="number" 
+    name="offer" 
+    placeholder="Leave empty for no discount" 
+    value={formData.offer} 
+    onChange={handleInputChange}
+    style={inputStyle}
+    min="0"
+    step="0.01"
+  />
+  <small style={{ color: '#718096', fontSize: '0.85rem' }}>
+    Leave empty to show only original price
+  </small>
+</div>
               </div>
               
               <div>
@@ -1282,19 +1293,21 @@ const openEditGuideModal = (guide) => {
                 </div>
                 
                 <div>
-                  <label style={labelStyle}>Offer Price *</label>
-                  <input 
-                    type="number" 
-                    name="offer" 
-                    placeholder="800" 
-                    value={formData.offer} 
-                    onChange={handleInputChange}
-                    style={inputStyle}
-                    min="0"
-                    step="0.01"
-                    required
-                  />
-                </div>
+  <label style={labelStyle}>Offer Price (Optional)</label>
+  <input 
+    type="number" 
+    name="offer" 
+    placeholder="Leave empty for no discount" 
+    value={formData.offer} 
+    onChange={handleInputChange}
+    style={inputStyle}
+    min="0"
+    step="0.01"
+  />
+  <small style={{ color: '#718096', fontSize: '0.85rem' }}>
+    Leave empty to show only original price
+  </small>
+</div>
               </div>
               
               <div>
