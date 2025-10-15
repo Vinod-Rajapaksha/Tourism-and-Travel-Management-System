@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from "../../services/api";
+import Swal from 'sweetalert2';
 
 
 const SeniorTravelConsultantDashboard = () => {
@@ -35,8 +36,11 @@ const [guideFormData, setGuideFormData] = useState({
   email: '',
   phone: '',
   password: '',
+  confirmPassword: '',
   status: 'PENDING'
 });
+const [showPassword, setShowPassword] = useState(false);
+const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 useEffect(() => {
   // Debug: Check token
   const token = localStorage.getItem('token');
@@ -110,9 +114,12 @@ const loadGuides = () => {
     email: '',
     phone: '',
     password: '',
+    confirmPassword: '',
     status: 'PENDING'
   });
   setError('');
+  setShowPassword(false);
+  setShowConfirmPassword(false);
 };
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -199,7 +206,7 @@ const handleCreatePackage = (e) => {
       setShowCreateModal(false);
       resetForm();
       setLoading(false);
-      alert('Package created successfully!');
+      Swal.fire('Package created successfully!');
     })
     .catch(err => {
       console.error("Full create error:", err);
@@ -239,7 +246,7 @@ const handleEditPackage = (e) => {
       resetForm();
       setSelectedPackage(null);
       setLoading(false);
-      alert('Package updated successfully!');
+      Swal.fire('Package updated successfully!');
     })
     .catch(err => {
       console.error("Full update error:", err);
@@ -261,7 +268,7 @@ const handleEditPackage = (e) => {
       setShowDeleteModal(false);
       setSelectedPackage(null);
       setLoading(false);
-      alert('Package deleted successfully!');
+      Swal.fire('Package deleted successfully!');
     })
     .catch(err => {
       console.error("Full delete error:", err);
@@ -288,7 +295,7 @@ const handleEditPackage = (e) => {
     setShowDeleteModal(true);
   };
   // Guide Management Functions
-const validateGuideForm = () => {
+const validateGuideForm = (isEdit = false) => {
   if (!guideFormData.firstName.trim()) {
     setError('First name is required');
     return false;
@@ -301,18 +308,47 @@ const validateGuideForm = () => {
     setError('NIC is required');
     return false;
   }
+  
+  // Email validation
   if (!guideFormData.email.trim()) {
     setError('Email is required');
     return false;
   }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(guideFormData.email)) {
+    setError('Please enter a valid email address');
+    return false;
+  }
+  
+  // Phone validation
   if (!guideFormData.phone.trim()) {
     setError('Phone is required');
     return false;
   }
-  if (!guideFormData.password.trim()) {
-  setError('Password is required');
-  return false;
-}
+  const phoneRegex = /^[0-9]+$/;
+  if (!phoneRegex.test(guideFormData.phone)) {
+    setError('Phone number must contain only numbers');
+    return false;
+  }
+  
+  // Password validation (required for new guides, optional for edit)
+  if (!isEdit && !guideFormData.password.trim()) {
+    setError('Password is required');
+    return false;
+  }
+  
+  // If password is provided, validate it
+  if (guideFormData.password.trim()) {
+    if (guideFormData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return false;
+    }
+    if (guideFormData.password !== guideFormData.confirmPassword) {
+      setError('Passwords do not match');
+      return false;
+    }
+  }
+  
   return true;
 };
 
@@ -345,7 +381,7 @@ const handleCreateGuide = (e) => {
     resetGuideForm();
     setSelectedGuide(null);
     setLoading(false);
-    alert('Guide created successfully!');
+    Swal.fire('Guide created successfully!');
   })
     .catch(err => {
       console.error("Full create error:", err);
@@ -358,7 +394,7 @@ const handleCreateGuide = (e) => {
       setShowGuideModal(false);
       resetGuideForm();
       setSelectedGuide(null);
-      alert('Guide created successfully! (Demo mode)');
+      Swal.fire('Guide created successfully! (Demo mode)');
     });
 };
 
@@ -366,10 +402,11 @@ const handleEditGuide = (e) => {
   e.preventDefault();
   setError('');
 
-  if (!validateGuideForm()) return;
+  if (!validateGuideForm(true)) return;
 
   setLoading(true);
 
+  // Only include password if it was changed
   const payload = {
     firstName: guideFormData.firstName,
     lastName: guideFormData.lastName,
@@ -377,9 +414,13 @@ const handleEditGuide = (e) => {
     nic: guideFormData.nic,
     email: guideFormData.email,
     phone: guideFormData.phone,
-    password: guideFormData.password ||selectedGuide.password ,
     status: guideFormData.status
   };
+
+  // Only add password to payload if it was provided
+  if (guideFormData.password.trim()) {
+    payload.password = guideFormData.password;
+  }
 
   console.log('Updating guide:', selectedGuide.guideID, 'with payload:', payload);
 
@@ -391,10 +432,14 @@ const handleEditGuide = (e) => {
     resetGuideForm();
     setSelectedGuide(null);
     setLoading(false);
-    alert('Guide updated successfully!');
+    Swal.fire('Guide updated successfully!');
   })
+  .catch(err => {
+    console.error("Full update error:", err);
+    setError(`Failed to update guide: ${err.message}`);
+    setLoading(false);
+  });
 };
-
 const handleToggleGuideStatus = (guide) => {
   const newStatus = guide.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
   setLoading(true);
@@ -409,7 +454,7 @@ const handleToggleGuideStatus = (guide) => {
       console.log('Toggle status response:', response.data);
       loadGuides();
       setLoading(false);
-      alert(`Guide ${newStatus === 'ACTIVE' ? 'activated' : 'deactivated'} successfully!`);
+      Swal.fire(`Guide ${newStatus === 'ACTIVE' ? 'activated' : 'deactivated'} successfully!`);
     })
     .catch(err => {
       console.error("Toggle status error:", err);
@@ -423,13 +468,16 @@ const openEditGuideModal = (guide) => {
   setGuideFormData({
     firstName: guide.firstName || '',
     lastName: guide.lastName || '',
-    gender: guide.gender || 'MALE',  // Changed from 'Male'
+    gender: guide.gender || 'MALE',
     nic: guide.nic || '',
     email: guide.email || '',
     phone: guide.phone || '',
     password: '',  // Leave empty for edit
+    confirmPassword: '',  // Leave empty for edit
     status: guide.status || 'PENDING'
   });
+  setShowPassword(false);
+  setShowConfirmPassword(false);
   setShowGuideModal(true);
 };
   const modalOverlayStyle = {
@@ -1430,6 +1478,19 @@ const openEditGuideModal = (guide) => {
       </div>
       
       <form onSubmit={selectedGuide ? handleEditGuide : handleCreateGuide} style={formStyle}>
+        {error && (
+    <div style={{
+      background: 'rgba(248, 215, 218, 0.9)',
+      color: '#721c24',
+      padding: '1rem',
+      borderRadius: '8px',
+      marginBottom: '1rem',
+      border: '1px solid #f5c6cb',
+      fontSize: '0.9rem'
+    }}>
+      {error}
+    </div>
+  )}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div>
             <label style={labelStyle}>First Name *</label>
@@ -1511,16 +1572,68 @@ const openEditGuideModal = (guide) => {
           </div>
         </div>
             <div>
-  <label style={labelStyle}>Password *</label>
-  <input 
-    type="password"
-    name="password"
-    placeholder="Enter temporary password"
-    value={guideFormData.password}
-    onChange={handleGuideInputChange}
-    style={inputStyle}
-    required
-  />
+  <label style={labelStyle}>Password {!selectedGuide && '*'}</label>
+  <div style={{ position: 'relative' }}>
+    <input 
+      type={showPassword ? "text" : "password"}
+      name="password"
+      placeholder={selectedGuide ? "Leave empty to keep current password" : "Enter password"}
+      value={guideFormData.password}
+      onChange={handleGuideInputChange}
+      style={inputStyle}
+      required={!selectedGuide}
+    />
+    <button
+      type="button"
+      onClick={() => setShowPassword(!showPassword)}
+      style={{
+        position: 'absolute',
+        right: '10px',
+        top: '50%',
+        transform: 'translateY(-50%)',
+        background: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        color: '#718096',
+        fontSize: '1.2rem'
+      }}
+    >
+      {showPassword ? '👁️' : '👁️‍🗨️'}
+    </button>
+  </div>
+  {!selectedGuide && <small style={{ color: '#718096', fontSize: '0.85rem' }}>Minimum 6 characters</small>}
+</div>
+
+<div>
+  <label style={labelStyle}>Confirm Password {!selectedGuide && '*'}</label>
+  <div style={{ position: 'relative' }}>
+    <input 
+      type={showConfirmPassword ? "text" : "password"}
+      name="confirmPassword"
+      placeholder={selectedGuide ? "Confirm new password if changing" : "Confirm password"}
+      value={guideFormData.confirmPassword}
+      onChange={handleGuideInputChange}
+      style={inputStyle}
+      required={!selectedGuide}
+    />
+    <button
+      type="button"
+      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+      style={{
+        position: 'absolute',
+        right: '10px',
+        top: '50%',
+        transform: 'translateY(-50%)',
+        background: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        color: '#718096',
+        fontSize: '1.2rem'
+      }}
+    >
+      {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+    </button>
+  </div>
 </div>
 
         
