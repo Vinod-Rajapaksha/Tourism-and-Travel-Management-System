@@ -1,9 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import api from "../../services/api";
 import Swal from 'sweetalert2';
-
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 
 const SeniorTravelConsultantDashboard = () => {
+  // Validation rules
+const VALIDATION_RULES = {
+  firstName: {
+    regex: /^[a-zA-Z\s'-]{2,50}$/,
+    message: 'First name must contain only letters (2-50 characters)'
+  },
+  lastName: {
+    regex: /^[a-zA-Z\s'-]{2,50}$/,
+    message: 'Last name must contain only letters (2-50 characters)'
+  },
+  phone: {
+    regex: /^[0-9]{10}$/,
+    message: 'Phone must be exactly 10 digits'
+  },
+  nic: {
+    regex: /^[0-9]{9}[vVxX]$/,
+    message: 'NIC format: 9 digits + V/X (e.g., 123456789V)'
+  },
+  email: {
+    regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    message: 'Invalid email format'
+  },
+  description: {
+  regex: /^.{10,500}$/,  // 10-500 characters
+  message: 'Description must be between 10-500 characters (approximately 10-80 words)'
+},
+title: {
+  regex: /^[a-zA-Z0-9\s\-&,']{3,100}$/,
+  message: 'Title must be 3-100 characters, alphanumeric with spaces and basic punctuation'
+},
+price: {
+  regex: /^\d+(\.\d{1,2})?$/,
+  message: 'Price must be a valid number'
+}
+};
   const [activeView, setActiveView] = useState('dashboard');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -14,6 +50,8 @@ const SeniorTravelConsultantDashboard = () => {
   const [error, setError] = useState('');
   const [formErrors, setFormErrors] = useState({});
   const [showViewModal, setShowViewModal] = useState(false);
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
 
   const [formData, setFormData] = useState({
@@ -42,6 +80,9 @@ const [guideFormData, setGuideFormData] = useState({
 const [showPassword, setShowPassword] = useState(false);
 const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 const [availabilityData, setAvailabilityData] = useState([]);
+const [fieldErrors, setFieldErrors] = useState({});
+const [showErrorModal, setShowErrorModal] = useState(false);
+const [errorModalMessage, setErrorModalMessage] = useState('');
 useEffect(() => {
   // Debug: Check token
   const token = localStorage.getItem('token');
@@ -77,7 +118,27 @@ useEffect(() => {
       setLoading(false);
     });
 };
-
+const handleLogoutClick = () => {
+  Swal.fire({
+    title: "Are you sure you want to logout?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, Logout",
+    cancelButtonText: "Cancel",
+    confirmButtonColor: "#e53e3e",
+    cancelButtonColor: "#718096",
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      try {
+        await logout();
+        navigate("/login", { replace: true });
+      } catch (err) {
+        console.error("Logout failed:", err);
+        Swal.fire("Error", "Failed to logout. Please try again.", "error");
+      }
+    }
+  });
+};
 const loadGuides = () => {
   setLoading(true);
   setError('');
@@ -139,6 +200,55 @@ const loadAvailability = () => {
   setShowPassword(false);
   setShowConfirmPassword(false);
 };
+const getWordCount = (text) => {
+  return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+};
+
+const validatePackageForm = () => {
+  const errors = {};
+  
+  // Title validation
+  if (!formData.title.trim()) {
+    errors.title = 'Title is required';
+  } else if (!VALIDATION_RULES.title.regex.test(formData.title)) {
+    errors.title = VALIDATION_RULES.title.message;
+  }
+  
+  // Description validation
+  if (!formData.description.trim()) {
+    errors.description = 'Description is required';
+  } else if (!VALIDATION_RULES.description.regex.test(formData.description)) {
+    errors.description = VALIDATION_RULES.description.message;
+  } else {
+    const wordCount = getWordCount(formData.description);
+    if (wordCount > 80) {
+      errors.description = `Description is too long (${wordCount} words, max 80)`;
+    }
+  }
+  
+  // Price validation
+  const price = parseFloat(formData.price);
+  if (!formData.price) {
+    errors.price = 'Price is required';
+  } else if (!VALIDATION_RULES.price.regex.test(formData.price)) {
+    errors.price = VALIDATION_RULES.price.message;
+  } else if (price <= 0) {
+    errors.price = 'Price must be greater than 0';
+  }
+  
+  // Offer validation
+  if (formData.offer !== '') {
+    const offer = parseFloat(formData.offer);
+    if (!offer || offer <= 0) {
+      errors.offer = 'Offer price must be a positive number';
+    } else if (offer > price) {
+      errors.offer = 'Offer price cannot be higher than original price';
+    }
+  }
+  
+  setFormErrors(errors);
+  return Object.keys(errors).length === 0;
+};
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -147,12 +257,90 @@ const loadAvailability = () => {
     }));
   };
 
-  const handleGuideInputChange = (e) => {
+ const handleGuideInputChange = (e) => {
   const { name, value } = e.target;
   setGuideFormData(prev => ({
     ...prev,
     [name]: value
   }));
+  
+  // Real-time validation
+  validateSingleField(name, value);
+};
+const handlePackageInputChange = (e) => {
+  const { name, value } = e.target;
+  setFormData(prev => ({
+    ...prev,
+    [name]: value
+  }));
+  
+  // Real-time validation for specific fields
+  if (name === 'description') {
+    const wordCount = getWordCount(value);
+    if (value.trim() && wordCount > 80) {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: `Too many words (${wordCount}/80)`
+      }));
+    } else if (value.trim() && value.length < 10) {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: 'Description too short (minimum 10 characters)'
+      }));
+    } else {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  }
+  
+  if (name === 'title') {
+    if (value.trim() && !VALIDATION_RULES.title.regex.test(value)) {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: VALIDATION_RULES.title.message
+      }));
+    } else {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  }
+  
+  if (name === 'price') {
+    if (value && parseFloat(value) <= 0) {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: 'Price must be greater than 0'
+      }));
+    } else {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  }
+};
+
+const validateSingleField = (fieldName, value) => {
+  const rule = VALIDATION_RULES[fieldName];
+  
+  if (!rule) {
+    setFieldErrors(prev => ({ ...prev, [fieldName]: '' }));
+    return;
+  }
+  
+  let errorMsg = '';
+  
+  if (!value.trim()) {
+    errorMsg = `${fieldName} is required`;
+  } else if (!rule.regex.test(value)) {
+    errorMsg = rule.message;
+  }
+  
+  setFieldErrors(prev => ({ ...prev, [fieldName]: errorMsg }));
 };
 
 const validateForm = () => {
@@ -195,9 +383,11 @@ const validateForm = () => {
 
 const handleCreatePackage = (e) => {
   e.preventDefault();
-  setError('');
+  setFormErrors({});  // Reset errors first
 
-  if (!validateForm()) return;
+  if (!validatePackageForm()) {
+    return;  // Validation failed, errors are displayed
+  }
 
   setLoading(true);
 
@@ -236,12 +426,14 @@ const handleCreatePackage = (e) => {
 
 const handleEditPackage = (e) => {
   e.preventDefault();
-  setError('');
+  setFormErrors({});  // Reset errors first
 
-  if (!validateForm()) return;
+  if (!validatePackageForm()) {
+    return;
+  }
 
   setLoading(true);
-
+  
   const price = parseFloat(formData.price);
   const offer = formData.offer === '' ? price : parseFloat(formData.offer);
 
@@ -314,57 +506,82 @@ const handleEditPackage = (e) => {
   };
   // Guide Management Functions
 const validateGuideForm = (isEdit = false) => {
+  const errors = {};
+  
+  // First Name
   if (!guideFormData.firstName.trim()) {
-    setError('First name is required');
-    return false;
+    errors.firstName = 'First name is required';
+  } else if (!VALIDATION_RULES.firstName.regex.test(guideFormData.firstName)) {
+    errors.firstName = VALIDATION_RULES.firstName.message;
   }
+  
+  // Last Name
   if (!guideFormData.lastName.trim()) {
-    setError('Last name is required');
-    return false;
+    errors.lastName = 'Last name is required';
+  } else if (!VALIDATION_RULES.lastName.regex.test(guideFormData.lastName)) {
+    errors.lastName = VALIDATION_RULES.lastName.message;
   }
+  
+  // NIC
   if (!guideFormData.nic.trim()) {
-    setError('NIC is required');
-    return false;
+    errors.nic = 'NIC is required';
+  } else if (!VALIDATION_RULES.nic.regex.test(guideFormData.nic)) {
+    errors.nic = VALIDATION_RULES.nic.message;
   }
   
-  // Email validation
+  // Email
   if (!guideFormData.email.trim()) {
-    setError('Email is required');
-    return false;
-  }
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(guideFormData.email)) {
-    setError('Please enter a valid email address');
-    return false;
+    errors.email = 'Email is required';
+  } else if (!VALIDATION_RULES.email.regex.test(guideFormData.email)) {
+    errors.email = VALIDATION_RULES.email.message;
   }
   
-  // Phone validation
+  // Phone
   if (!guideFormData.phone.trim()) {
-    setError('Phone is required');
-    return false;
-  }
-  const phoneRegex = /^[0-9]+$/;
-  if (!phoneRegex.test(guideFormData.phone)) {
-    setError('Phone number must contain only numbers');
-    return false;
+    errors.phone = 'Phone is required';
+  } else if (!VALIDATION_RULES.phone.regex.test(guideFormData.phone)) {
+    errors.phone = VALIDATION_RULES.phone.message;
   }
   
-  // Password validation (required for new guides, optional for edit)
+  // Password
   if (!isEdit && !guideFormData.password.trim()) {
-    setError('Password is required');
-    return false;
+    errors.password = 'Password is required';
   }
   
-  // If password is provided, validate it
   if (guideFormData.password.trim()) {
     if (guideFormData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      return false;
+      errors.password = 'Password must be at least 6 characters';
     }
     if (guideFormData.password !== guideFormData.confirmPassword) {
-      setError('Passwords do not match');
-      return false;
+      errors.confirmPassword = 'Passwords do not match';
     }
+  }
+  
+  setFieldErrors(errors);
+  return Object.keys(errors).length === 0;
+};
+
+const checkDuplicateGuide = () => {
+  // Check if email already exists in current guides list
+  const emailExists = guides.some(guide => 
+    guide.email.toLowerCase() === guideFormData.email.toLowerCase() &&
+    (!selectedGuide || guide.guideID !== selectedGuide.guideID)
+  );
+  
+  if (emailExists) {
+    setError('Email already exists. Please use a different email address.');
+    return false;
+  }
+  
+  // Check if NIC already exists in current guides list
+  const nicExists = guides.some(guide => 
+    guide.nic === guideFormData.nic &&
+    (!selectedGuide || guide.guideID !== selectedGuide.guideID)
+  );
+  
+  if (nicExists) {
+    setError('NIC already exists. Please use a different NIC.');
+    return false;
   }
   
   return true;
@@ -374,7 +591,18 @@ const handleCreateGuide = (e) => {
   e.preventDefault();
   setError('');
 
-  if (!validateGuideForm()) return;
+  if (!validateGuideForm()) {
+  const firstError = Object.values(fieldErrors).find(err => err);
+  if (firstError) setErrorModalMessage(firstError);
+  setShowErrorModal(true);
+  return;
+}
+  if (!checkDuplicateGuide()) {
+  const duplicateError = error; // Get the error that was set
+  setErrorModalMessage(duplicateError);
+  setShowErrorModal(true);
+  return;
+}
 
   setLoading(true);
 
@@ -401,26 +629,53 @@ const handleCreateGuide = (e) => {
     setLoading(false);
     Swal.fire('Guide created successfully!');
   })
-    .catch(err => {
-      console.error("Full create error:", err);
-      setError(`Failed to create guide: ${err.message}`);
-      setLoading(false);
-
-      // Demo fallback
-      const newGuide = { ...payload, guideID: Date.now() };
-      setGuides(prev => [...prev, newGuide]);
-      setShowGuideModal(false);
-      resetGuideForm();
-      setSelectedGuide(null);
-      Swal.fire('Guide created successfully! (Demo mode)');
+.catch(err => {
+    console.error("Full create error:", err);
+    setLoading(false);
+    
+    // Check if it's a duplicate error (email or NIC)
+    if (err.response && err.response.status === 409) {
+      const errorData = err.response.data;
+      const errorMessage = errorData.error || 'Duplicate entry detected';
+      const field = errorData.field; // 'email' or 'nic'
+      
+      setError(errorMessage);
+      
+      Swal.fire({
+        icon: 'error',
+        title: field === 'email' ? 'Duplicate Email' : 'Duplicate NIC',
+        text: errorMessage,
+        confirmButtonColor: '#667eea'
+      });
+      return; // Don't save in demo mode if duplicate exists
+    }
+    
+    // For other errors, set error message
+    setError(`Failed to create guide: ${err.message}`);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: `Failed to create guide: ${err.response?.data?.error || err.message}`,
+      confirmButtonColor: '#667eea'
     });
-};
-
+  });
+}
 const handleEditGuide = (e) => {
   e.preventDefault();
   setError('');
 
-  if (!validateGuideForm(true)) return;
+  if (!validateGuideForm(true)) {
+  const firstError = Object.values(fieldErrors).find(err => err);
+  if (firstError) setErrorModalMessage(firstError);
+  setShowErrorModal(true);
+  return;
+}
+  if (!checkDuplicateGuide()) {
+  const duplicateError = error;
+  setErrorModalMessage(duplicateError);
+  setShowErrorModal(true);
+  return;
+}
 
   setLoading(true);
 
@@ -454,10 +709,65 @@ const handleEditGuide = (e) => {
   })
   .catch(err => {
     console.error("Full update error:", err);
-    setError(`Failed to update guide: ${err.message}`);
     setLoading(false);
+    
+    // Check if it's a duplicate error (email or NIC)
+    if (err.response && err.response.status === 409) {
+      const errorData = err.response.data;
+      const errorMessage = errorData.error || 'Duplicate entry detected';
+      const field = errorData.field; // 'email' or 'nic'
+      
+      setError(errorMessage);
+      
+      Swal.fire({
+        icon: 'error',
+        title: field === 'email' ? 'Duplicate Email' : 'Duplicate NIC',
+        text: errorMessage,
+        confirmButtonColor: '#667eea'
+      });
+      return;
+    }
+    
+    
+    // For other errors
+    setError(`Failed to update guide: ${err.message}`);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: `Failed to update guide: ${err.response?.data?.error || err.message}`,
+      confirmButtonColor: '#667eea'
+    });
+  });
+  
+};
+const handleDeleteGuide = (guide) => {
+  Swal.fire({
+    title: 'Are you sure?',
+    text: `Do you want to delete ${guide.firstName} ${guide.lastName}?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#e53e3e',
+    cancelButtonColor: '#718096',
+    confirmButtonText: 'Yes, delete it!'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      setLoading(true);
+      api.delete(`/guides/${guide.guideID}`)
+        .then(() => {
+          loadGuides();
+          setLoading(false);
+          Swal.fire('Deleted!', 'Guide has been deleted successfully.', 'success');
+        })
+        .catch((err) => {
+          console.error("Delete guide error:", err);
+          setLoading(false);
+          Swal.fire('Error', `Failed to delete guide: ${err.message}`, 'error');
+        });
+    }
   });
 };
+
+
 const handleToggleGuideStatus = (guide) => {
   const newStatus = guide.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
   setLoading(true);
@@ -573,7 +883,48 @@ const openEditGuideModal = (guide) => {
     color: '#6c757d',
     border: '2px solid #e9ecef'
   };
-
+// Error Modal
+const ErrorModalComponent = () => (
+  showErrorModal && (
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      background: 'rgba(0,0,0,0.7)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 2000
+    }}>
+      <div style={{
+        background: 'white',
+        padding: '2rem',
+        borderRadius: '15px',
+        maxWidth: '400px',
+        textAlign: 'center',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+      }}>
+        <h3 style={{ color: '#c53030', margin: '0 0 1rem 0' }}>Validation Error</h3>
+        <p style={{ color: '#742a2a', margin: '0 0 1.5rem 0', lineHeight: '1.5' }}>
+          {errorModalMessage}
+        </p>
+        <button
+          onClick={() => setShowErrorModal(false)}
+          style={{
+            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            color: 'white',
+            border: 'none',
+            padding: '0.75rem 1.5rem',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontWeight: '600'
+          }}
+        >
+          Got it
+        </button>
+      </div>
+    </div>
+  )
+);
   return (
     <div style={{ 
       display: 'flex', 
@@ -693,27 +1044,30 @@ const openEditGuideModal = (guide) => {
     Availability Dashboard
   </button>
 
-  <button
-    style={{
-      width: '100%',
-      padding: '1rem',
-      border: 'none',
-      background: activeView === 'settings'
-        ? 'linear-gradient(135deg, #667eea, #764ba2)'
-        : 'transparent',
-      color: activeView === 'settings' ? 'white' : '#4a5568',
-      textAlign: 'left',
-      cursor: 'pointer',
-      fontSize: '1rem',
-      borderRadius: '12px',
-      marginBottom: '0.5rem',
-      fontWeight: '500',
-      transition: 'all 0.3s ease'
-    }}
-    onClick={() => setActiveView('settings')}
-  >
-    Settings
-  </button>
+<button
+  style={{
+    width: '100%',
+    padding: '1rem',
+    border: 'none',
+    background: activeView === 'logout'
+      ? 'linear-gradient(135deg, #667eea, #764ba2)'
+      : 'transparent',
+    color: activeView === 'logout' ? 'white' : '#4a5568', // ✅ fixed line
+    textAlign: 'left',
+    cursor: 'pointer',
+    fontSize: '1rem',
+    borderRadius: '12px',
+    marginBottom: '0.5rem',
+    fontWeight: '500',
+    transition: 'all 0.3s ease'
+  }}
+  onClick={handleLogoutClick}
+>
+  Logout
+</button>
+
+
+
 </nav>
 
       </aside>
@@ -859,10 +1213,18 @@ const openEditGuideModal = (guide) => {
                       fontSize: '1.25rem'
                     }}>{pkg.title}</h3>
                     <p style={{ 
-                      color: '#718096',
-                      marginBottom: '1rem',
-                      lineHeight: '1.5'
-                    }}>{pkg.description}</p>
+                        color: '#718096',
+                        marginBottom: '1rem',
+                        lineHeight: '1.5',
+                        height: '3em',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical'
+                      }}>
+                        {pkg.description}
+                    </p>
                     <div style={{ 
   display: 'flex', 
   gap: '1rem', 
@@ -1102,6 +1464,20 @@ const openEditGuideModal = (guide) => {
                     >
                        Edit
                     </button>
+                    <button 
+  onClick={() => handleDeleteGuide(guide)}
+  style={{
+    ...buttonStyle,
+    padding: '0.5rem 1rem',
+    fontSize: '0.875rem',
+    background: 'rgba(245, 101, 101, 0.1)',
+    color: '#f56565',
+    border: '1px solid rgba(245, 101, 101, 0.3)'
+  }}
+>
+   Delete
+</button>
+
                     
                   </div>
                 </td>
@@ -1240,18 +1616,7 @@ const openEditGuideModal = (guide) => {
   </div>
 )}
 
-{activeView === 'settings' && (
-  <div style={{ 
-    background: 'rgba(255, 255, 255, 0.95)',
-    backdropFilter: 'blur(20px)',
-    padding: '2rem',
-    borderRadius: '20px',
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
-  }}>
-    <h2 style={{ color: '#2d3748' }}>Settings</h2>
-    <p>Here you will configure your preferences (coming soon).</p>
-  </div>
-)}
+
 
       </main>
 
@@ -1286,53 +1651,80 @@ const openEditGuideModal = (guide) => {
                   name="image" 
                   placeholder="https://example.com/image.jpg" 
                   value={formData.image} 
-                  onChange={handleInputChange}
+                  onChange={handlePackageInputChange}
                   style={inputStyle}
                 />
               </div>
               
               <div>
-                <label style={labelStyle}>Title *</label>
-                <input 
-                  name="title" 
-                  placeholder="Package title" 
-                  value={formData.title} 
-                  onChange={handleInputChange}
-                  style={inputStyle}
-                  required
-                />
-                 {formErrors.title && <p style={{ color: "red", fontSize: "0.85rem" }}>{formErrors.title}</p>}
-              </div>
+  <label style={labelStyle}>Title *</label>
+  <input 
+    name="title" 
+    placeholder="Package title" 
+    value={formData.title} 
+    onChange={handlePackageInputChange}
+    style={{
+      ...inputStyle,
+      borderColor: formErrors.title ? '#f56565' : '#e2e8f0'
+    }}
+    required
+  />
+  {formErrors.title && (
+    <p style={{ color: '#c53030', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
+      {formErrors.title}
+    </p>
+  )}
+</div>
               
               <div>
-                <label style={labelStyle}>Description *</label>
-                <textarea 
-                  name="description" 
-                  placeholder="Package description" 
-                  value={formData.description} 
-                  onChange={handleInputChange}
-                  style={{ ...inputStyle, minHeight: '100px', resize: 'vertical' }}
-                  required
-                />
-                 {formErrors.description && <p style={{ color: "red", fontSize: "0.85rem" }}>{formErrors.description}</p>}
-              </div>
+  <label style={labelStyle}>Description *</label>
+  <textarea 
+    name="description" 
+    placeholder="Package description" 
+    value={formData.description} 
+    onChange={handlePackageInputChange}
+    style={{
+      ...inputStyle,
+      minHeight: '100px',
+      resize: 'vertical',
+      borderColor: formErrors.description ? '#f56565' : '#e2e8f0'
+    }}
+    required
+  />
+  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem' }}>
+    <span style={{ color: '#718096', fontSize: '0.85rem' }}>
+      Word count: {getWordCount(formData.description)}/80
+    </span>
+    {formErrors.description && (
+      <p style={{ color: '#c53030', fontSize: '0.85rem', margin: 0 }}>
+        {formErrors.description}
+      </p>
+    )}
+  </div>
+</div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={labelStyle}>Original Price *</label>
-                  <input 
-                    type="number" 
-                    name="price" 
-                    placeholder="1000" 
-                    value={formData.price} 
-                    onChange={handleInputChange}
-                    style={inputStyle}
-                    min="0"
-                    step="0.01"
-                    required
-                  />
-                   {formErrors.price && <p style={{ color: "red", fontSize: "0.85rem" }}>{formErrors.price}</p>}
-                </div>
+              <div>
+  <label style={labelStyle}>Original Price *</label>
+  <input 
+    type="number" 
+    name="price" 
+    placeholder="1000" 
+    value={formData.price} 
+    onChange={handlePackageInputChange}
+    style={{
+      ...inputStyle,
+      borderColor: formErrors.price ? '#f56565' : '#e2e8f0'
+    }}
+    min="0"
+    step="0.01"
+    required
+  />
+  {formErrors.price && (
+    <p style={{ color: '#c53030', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
+      {formErrors.price}
+    </p>
+  )}
+</div>
                 
                 <div>
   <label style={labelStyle}>Offer Price (Optional)</label>
@@ -1341,7 +1733,7 @@ const openEditGuideModal = (guide) => {
     name="offer" 
     placeholder="Leave empty for no discount" 
     value={formData.offer} 
-    onChange={handleInputChange}
+    onChange={handlePackageInputChange}
     style={inputStyle}
     min="0"
     step="0.01"
@@ -1350,14 +1742,14 @@ const openEditGuideModal = (guide) => {
     Leave empty to show only original price
   </small>
 </div>
-              </div>
+              
               
               <div>
                 <label style={labelStyle}>Status</label>
                 <select 
                   name="status" 
                   value={formData.status} 
-                  onChange={handleInputChange}
+                  onChange={handlePackageInputChange}
                   style={inputStyle}
                 >
                   <option value="ACTIVE">Active</option>
@@ -1426,7 +1818,7 @@ const openEditGuideModal = (guide) => {
                   name="image" 
                   placeholder="https://example.com/image.jpg" 
                   value={formData.image} 
-                  onChange={handleInputChange}
+                  onChange={handlePackageInputChange}
                   style={inputStyle}
                 />
               </div>
@@ -1437,7 +1829,7 @@ const openEditGuideModal = (guide) => {
                   name="title" 
                   placeholder="Package title" 
                   value={formData.title} 
-                  onChange={handleInputChange}
+                  onChange={handlePackageInputChange}
                   style={inputStyle}
                   required
                 />
@@ -1449,52 +1841,60 @@ const openEditGuideModal = (guide) => {
                   name="description" 
                   placeholder="Package description" 
                   value={formData.description} 
-                  onChange={handleInputChange}
+                  onChange={handlePackageInputChange}
                   style={{ ...inputStyle, minHeight: '100px', resize: 'vertical' }}
                   required
                 />
               </div>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={labelStyle}>Original Price *</label>
-                  <input 
-                    type="number" 
-                    name="price" 
-                    placeholder="1000" 
-                    value={formData.price} 
-                    onChange={handleInputChange}
-                    style={inputStyle}
-                    min="0"
-                    step="0.01"
-                    required
-                  />
-                </div>
-                
-                <div>
-  <label style={labelStyle}>Offer Price (Optional)</label>
-  <input 
-    type="number" 
-    name="offer" 
-    placeholder="Leave empty for no discount" 
-    value={formData.offer} 
-    onChange={handleInputChange}
-    style={inputStyle}
-    min="0"
-    step="0.01"
-  />
-  <small style={{ color: '#718096', fontSize: '0.85rem' }}>
-    Leave empty to show only original price
-  </small>
+  <div>
+    <label style={labelStyle}>Original Price *</label>
+    <input 
+      type="number" 
+      name="price" 
+      placeholder="1000" 
+      value={formData.price} 
+      onChange={handlePackageInputChange}
+      style={{
+        ...inputStyle,
+        borderColor: formErrors.price ? '#f56565' : '#e2e8f0'
+      }}
+      min="0"
+      step="0.01"
+      required
+    />
+    {formErrors.price && (
+      <p style={{ color: '#c53030', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
+        {formErrors.price}
+      </p>
+    )}
+  </div>
+  
+  <div>
+    <label style={labelStyle}>Offer Price (Optional)</label>
+    <input 
+      type="number" 
+      name="offer" 
+      placeholder="Leave empty for no discount" 
+      value={formData.offer} 
+      onChange={handlePackageInputChange}
+      style={inputStyle}
+      min="0"
+      step="0.01"
+    />
+    <small style={{ color: '#718096', fontSize: '0.85rem' }}>
+      Leave empty to show only original price
+    </small>
+  </div>
 </div>
-              </div>
               
               <div>
                 <label style={labelStyle}>Status</label>
                 <select 
                   name="status" 
                   value={formData.status} 
-                  onChange={handleInputChange}
+                  onChange={handlePackageInputChange}
                   style={inputStyle}
                 >
                   <option value="ACTIVE">Active</option>
@@ -1633,6 +2033,11 @@ const openEditGuideModal = (guide) => {
               style={inputStyle}
               required
             />
+            {fieldErrors.firstName && (
+  <p style={{ color: '#c53030', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
+    {fieldErrors.firstName}
+  </p>
+)}
           </div>
           
           <div>
@@ -1645,6 +2050,11 @@ const openEditGuideModal = (guide) => {
               style={inputStyle}
               required
             />
+            {fieldErrors.lastName && (
+  <p style={{ color: '#c53030', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
+    {fieldErrors.lastNameName}
+  </p>
+)}
           </div>
         </div>
 
@@ -1673,6 +2083,11 @@ const openEditGuideModal = (guide) => {
               style={inputStyle}
               required
             />
+            {fieldErrors.nic && (
+  <p style={{ color: '#c53030', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
+    {fieldErrors.nic}
+  </p>
+)}
           </div>
         </div>
 
@@ -1688,6 +2103,11 @@ const openEditGuideModal = (guide) => {
               style={inputStyle}
               required
             />
+            {fieldErrors.email && (
+  <p style={{ color: '#c53030', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
+    {fieldErrors.email}
+  </p>
+)}
           </div>
           
           <div>
@@ -1700,6 +2120,11 @@ const openEditGuideModal = (guide) => {
               style={inputStyle}
               required
             />
+            {<fieldErrors className="phone"></fieldErrors> && (
+  <p style={{ color: '#c53030', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
+    {fieldErrors.phone}
+  </p>
+)}
           </div>
         </div>
             <div>
@@ -1714,6 +2139,11 @@ const openEditGuideModal = (guide) => {
       style={inputStyle}
       required={!selectedGuide}
     />
+    {fieldErrors.password && (
+  <p style={{ color: '#c53030', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
+    {fieldErrors.firstName}
+  </p>
+)}
     <button
       type="button"
       onClick={() => setShowPassword(!showPassword)}
@@ -1747,6 +2177,11 @@ const openEditGuideModal = (guide) => {
       style={inputStyle}
       required={!selectedGuide}
     />
+    {fieldErrors.confirmPassword && (
+  <p style={{ color: '#c53030', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
+    {fieldErrors.confirmPassword}
+  </p>
+)}
     <button
       type="button"
       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -2064,6 +2499,7 @@ const openEditGuideModal = (guide) => {
     </div>
   
 )}
+<ErrorModalComponent />
     </div>
   );
 };
