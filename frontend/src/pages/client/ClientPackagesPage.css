@@ -773,4 +773,30 @@
   .modal-header {
     padding: 1.5rem 1.5rem 1rem 1.5rem;
   }
+  
+}
+.book-now-btn.fully-booked {
+  background: linear-gradient(135deg, #f56565, #e53e3e);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.book-now-btn.fully-booked:hover {
+  transform: none;
+  box-shadow: 0 2px 8px rgba(245, 101, 101, 0.3);
+}
+
+.detail-item .icon {
+  margin-right: 0.5rem;
+}
+
+.package-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.book-now-btn {
+  flex: 1;
+  max-width: 100%;
 }

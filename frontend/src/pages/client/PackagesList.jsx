@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './ClientPackagesPage.css';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 
 const ClientPackagesPage = () => {
   const [packages, setPackages] = useState([]);
@@ -11,12 +12,20 @@ const ClientPackagesPage = () => {
 
   // 🔹 Fetch packages from backend
   useEffect(() => {
-    axios.get("http://localhost:8080/api/packages")
+    axios.get("http://localhost:8080/api/packages/with-availability")
       .then((res) => {
         // Only show ACTIVE packages
         setPackages(res.data.filter(pkg => pkg.status === "ACTIVE"));
       })
-      .catch((err) => console.error("Error fetching packages:", err));
+      .catch((err) => {
+        console.error("Error fetching packages:", err);
+        // Fallback to regular packages endpoint if with-availability fails
+        axios.get("http://localhost:8080/api/packages")
+          .then((res) => {
+            setPackages(res.data.filter(pkg => pkg.status === "ACTIVE"));
+          })
+          .catch((err2) => console.error("Fallback error:", err2));
+      });
   }, []);
 
   // 🔹 Filter + sort
@@ -36,6 +45,42 @@ const ClientPackagesPage = () => {
           return 0;
       }
     });
+
+  const handleBooking = (pkg) => {
+    // Check if package is fully booked
+    if (pkg.available !== undefined && pkg.available <= 0) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Fully Booked',
+        text: 'Sorry, this package is fully booked!',
+        confirmButtonColor: '#667eea'
+      });
+      return;
+    }
+
+    // Show confirmation dialog
+    Swal.fire({
+      title: 'Confirm Booking',
+      text: `Are you sure you want to book "${pkg.title}"?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#667eea',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Yes, Book Now!',
+      cancelButtonText: 'Cancel'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Show success message
+        Swal.fire({
+          icon: 'success',
+          title: 'Booked Successfully!',
+          text: `Your booking for "${pkg.title}" has been confirmed.`,
+          confirmButtonColor: '#667eea'
+        });
+        // TODO: Add actual booking logic here later
+      }
+    });
+  };  
 
   const openBookingModal = (pkg) => {
     setSelectedPackage(pkg);
@@ -167,13 +212,19 @@ const ClientPackagesPage = () => {
 
                 <div className="package-details">
                   <div className="detail-item">
-                    <span className="icon"></span>
+                    <span className="icon">📅</span>
                     <span>{pkg.duration || "N/A"}</span>
                   </div>
                   <div className="detail-item">
-                    <span className="icon"></span>
-                    <span>{pkg.rating || 0}/</span>
+                    <span className="icon">⭐</span>
+                    <span>{pkg.rating || 0}/5</span>
                   </div>
+                  {pkg.available !== undefined && (
+                    <div className="detail-item">
+                      <span className="icon">🎫</span>
+                      <span>{pkg.available} spots left</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="package-pricing">
@@ -192,8 +243,13 @@ const ClientPackagesPage = () => {
                 </div>
 
                 <div className="package-actions">
-                  <button className="view-details-btn">View Details</button>
-                  <button className="book-now-btn" onClick={() => openBookingModal(pkg)}>Book Now</button>
+                  <button 
+                    className={`book-now-btn ${pkg.available !== undefined && pkg.available <= 0 ? 'fully-booked' : ''}`}
+                    onClick={() => handleBooking(pkg)}
+                    disabled={pkg.available !== undefined && pkg.available <= 0}
+                  >
+                    {pkg.available !== undefined && pkg.available <= 0 ? 'Fully Booked' : 'Book Now'}
+                  </button>
                 </div>
               </div>
             </div>
