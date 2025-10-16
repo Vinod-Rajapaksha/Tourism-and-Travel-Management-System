@@ -41,6 +41,7 @@ const [guideFormData, setGuideFormData] = useState({
 });
 const [showPassword, setShowPassword] = useState(false);
 const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+const [availabilityData, setAvailabilityData] = useState([]);
 useEffect(() => {
   // Debug: Check token
   const token = localStorage.getItem('token');
@@ -57,6 +58,7 @@ useEffect(() => {
   useEffect(() => {
     loadPackages();
     loadGuides();
+    loadAvailability()
   }, []);
 
   const loadPackages = () => {
@@ -93,6 +95,22 @@ const loadGuides = () => {
     });
 };
 
+const loadAvailability = () => {
+  setLoading(true);
+  setError('');
+  
+  api.get("/availability")
+    .then(res => {
+      console.log("Loaded availability:", res.data);
+      setAvailabilityData(res.data);
+      setLoading(false);
+    })
+    .catch(err => {
+      console.error("Error fetching availability:", err);
+      setError(`Failed to load availability: ${err.message}`);
+      setLoading(false);
+    });
+};
   const resetForm = () => {
     setFormData({
       image: '',
@@ -1104,8 +1122,121 @@ const openEditGuideModal = (guide) => {
     borderRadius: '20px',
     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
   }}>
-    <h2 style={{ color: '#2d3748' }}>Availability Dashboard</h2>
-    <p>Here you will track tour availability (coming soon).</p>
+    <h2 style={{ 
+      color: '#2d3748',
+      marginBottom: '2rem',
+      fontSize: '2rem',
+      fontWeight: '700'
+    }}>Package Availability Dashboard</h2>
+    
+    <div style={{ 
+      background: 'white',
+      borderRadius: '15px',
+      overflow: 'hidden',
+      boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+    }}>
+      <table style={{ 
+        width: '100%', 
+        borderCollapse: 'collapse'
+      }}>
+        <thead>
+          <tr style={{ 
+            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            color: 'white'
+          }}>
+            <th style={{ 
+              padding: '1rem', 
+              textAlign: 'left',
+              fontWeight: '600'
+            }}>Package Name</th>
+            <th style={{ 
+              padding: '1rem', 
+              textAlign: 'center',
+              fontWeight: '600'
+            }}>Current Bookings</th>
+            <th style={{ 
+              padding: '1rem', 
+              textAlign: 'center',
+              fontWeight: '600'
+            }}>Available</th>
+            <th style={{ 
+              padding: '1rem', 
+              textAlign: 'center',
+              fontWeight: '600'
+            }}>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {availabilityData.length === 0 ? (
+            <tr>
+              <td colSpan="4" style={{ 
+                padding: '2rem', 
+                textAlign: 'center',
+                color: '#718096'
+              }}>
+                No availability data found.
+              </td>
+            </tr>
+          ) : (
+            availabilityData.map((pkg, index) => (
+              <tr key={pkg.packageID} style={{ 
+                borderBottom: '1px solid #e2e8f0',
+                background: index % 2 === 0 ? '#f8f9fa' : 'white'
+              }}>
+                <td style={{ 
+                  padding: '1rem', 
+                  color: '#2d3748', 
+                  fontWeight: '500' 
+                }}>
+                  {pkg.title}
+                </td>
+                <td style={{ 
+                  padding: '1rem', 
+                  textAlign: 'center',
+                  color: '#718096',
+                  fontSize: '1.1rem',
+                  fontWeight: '600'
+                }}>
+                  {pkg.currentBookings}
+                </td>
+                <td style={{ 
+                  padding: '1rem', 
+                  textAlign: 'center',
+                  color: '#718096',
+                  fontSize: '1.1rem',
+                  fontWeight: '600'
+                }}>
+                  {pkg.available}
+                </td>
+                <td style={{ 
+                  padding: '1rem', 
+                  textAlign: 'center' 
+                }}>
+                  <span style={{
+                    padding: '0.5rem 1rem',
+                    borderRadius: '20px',
+                    fontSize: '0.75rem',
+                    fontWeight: '600',
+                    textTransform: 'uppercase',
+                    background: pkg.status === 'Full' 
+                      ? 'rgba(245, 101, 101, 0.1)' 
+                      : 'rgba(56, 161, 105, 0.1)',
+                    color: pkg.status === 'Full' 
+                      ? '#f56565' 
+                      : '#38a169',
+                    border: `1px solid ${pkg.status === 'Full' 
+                      ? 'rgba(245, 101, 101, 0.3)' 
+                      : 'rgba(56, 161, 105, 0.3)'}`
+                  }}>
+                    {pkg.status}
+                  </span>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
   </div>
 )}
 
