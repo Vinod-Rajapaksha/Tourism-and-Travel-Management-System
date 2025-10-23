@@ -1,36 +1,20 @@
-package com.example.ttms.model;
+package com.example.ttms.dto;
 
-import jakarta.persistence.*;
-import java.time.LocalDateTime;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "Reservation")
-public class Reservation {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class ReservationDTO {
     private Long reservationID;
-
     private Long userID;
     private Long packageID;
-    private Long guideID;
-    private Long paymentID;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 16)
-    private ReservationStatus status;
-
+    private Long guideID; // may be null
+    private String status;
     private LocalDate startDate;
     private LocalDate endDate;
-
-    @Column(nullable = false)
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    //@Column(nullable = false)
-    //private boolean deleted = false;
-
-    // getters and setters
+    // getters / setters
     public Long getReservationID() { return reservationID; }
     public void setReservationID(Long reservationID) { this.reservationID = reservationID; }
 
@@ -43,11 +27,8 @@ public class Reservation {
     public Long getGuideID() { return guideID; }
     public void setGuideID(Long guideID) { this.guideID = guideID; }
 
-    public Long getPaymentID() { return paymentID; }
-    public void setPaymentID(Long paymentID) { this.paymentID = paymentID; }
-
-    public ReservationStatus getStatus() { return status; }
-    public void setStatus(ReservationStatus status) { this.status = status; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
     public LocalDate getStartDate() { return startDate; }
     public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
@@ -60,8 +41,5 @@ public class Reservation {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
-
-    //public Boolean getDeleted() {return deleted;}
-    //public void setDeleted(Boolean deleted) {this.deleted = deleted;}
 }
 
