@@ -1,0 +1,166 @@
+/* Customer Dashboard Styles */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Card hover effects */
+.card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+}
+
+/* Stats cards */
+.bg-primary, .bg-warning, .bg-success, .bg-info {
+  background: linear-gradient(135deg, var(--bs-primary) 0%, var(--bs-primary-dark, #0056b3) 100%) !important;
+}
+
+.bg-warning {
+  background: linear-gradient(135deg, var(--bs-warning) 0%, #e0a800 100%) !important;
+}
+
+.bg-success {
+  background: linear-gradient(135deg, var(--bs-success) 0%, #1e7e34 100%) !important;
+}
+
+.bg-info {
+  background: linear-gradient(135deg, var(--bs-info) 0%, #138496 100%) !important;
+}
+
+/* Tab styling */
+.nav-tabs .nav-link {
+  border: none;
+  border-radius: 0;
+  color: #6c757d;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link:hover {
+  border-color: transparent;
+  color: var(--bs-primary);
+  background-color: rgba(13, 110, 253, 0.1);
+}
+
+.nav-tabs .nav-link.active {
+  color: var(--bs-primary);
+  background-color: rgba(13, 110, 253, 0.1);
+  border-color: transparent;
+  border-bottom: 2px solid var(--bs-primary);
+}
+
+/* Button styling */
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Status badges */
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-completed {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+/* Rating stars */
+.rating-stars {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+/* List group items */
+.list-group-item {
+  border-left: none;
+  border-right: none;
+  transition: background-color 0.2s ease;
+}
+
+.list-group-item:hover {
+  background-color: rgba(13, 110, 253, 0.05);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 1rem;
+  }
+  
+  .btn {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+  }
+  
+  .nav-tabs .nav-link {
+    font-size: 0.875rem;
+    padding: 0.75rem 0.5rem;
+  }
+}
+
+/* Loading animation */
+.spinner-border {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Alert animations */
+.alert {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
