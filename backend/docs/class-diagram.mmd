@@ -1,0 +1,125 @@
+classDiagram
+  class Admin {
+    +Long adminID
+    +String fName
+    +String lName
+    +String role
+    +String email
+    +String password
+    +String phone
+    +LocalDateTime createdAt
+  }
+
+  class Client {
+    +Long userID
+    +String firstName
+    +String lastName
+    +Gender gender
+    +String nic
+    +String email
+    +String password
+    +String phone
+    +LocalDateTime createdAt
+  }
+
+  class Guide {
+    +Long guideID
+    +String firstName
+    +String lastName
+    +Gender gender
+    +String nic
+    +String email
+    +String password
+    +String phone
+    +GuideStatus status
+    +LocalDateTime createdAt
+  }
+
+  class Packages {
+    +Long packageID
+    +String image
+    +String title
+    +String description
+    +BigDecimal price
+    +BigDecimal offer
+    +PackageStatus status
+    +LocalDateTime createdAt
+  }
+
+  class Reservation {
+    +Long reservationID
+    +String confirmationNumber
+    +ReservationStatus status
+    +LocalDate startDate
+    +LocalDate endDate
+    +LocalDateTime createdAt
+  }
+
+  class Payment {
+    +Long paymentID
+    +BigDecimal amount
+    +LocalDateTime paymentDate
+    +PaymentStatus status
+  }
+
+  class Refund {
+    +Long refundID
+    +BigDecimal amount
+    +String reason
+    +RefundStatus status
+    +LocalDateTime createdAt
+  }
+
+  class Feedback {
+    +Long feedbackID
+    +Short rating
+    +String comment
+    +LocalDateTime submittedAt
+  }
+
+  class Event {
+    +Long eventID
+    +String title
+    +LocalDate date
+    +String details
+    +LocalDateTime createdAt
+  }
+
+  %% Enums (as placeholders)
+  class Gender
+  class GuideStatus
+  class PackageStatus
+  class ReservationStatus
+  class PaymentStatus
+  class RefundStatus
+
+  %% Relationships
+  Client "1" --> "0..*" Reservation : makes
+  Client "1" --> "0..*" Payment : pays
+  Client "1" --> "0..*" Feedback : writes
+
+  Packages "1" --> "0..*" Reservation : contains
+  Packages "1" --> "0..*" Payment : for
+  Packages "1" --> "0..*" Feedback : receives
+
+  Guide "1" --> "0..*" Reservation : assigned to
+
+  Reservation "1" --> "0..1" Payment : has
+  Payment "1" --> "0..1" Refund : may generate
+
+  Feedback "0..*" --> "1" Client : by
+  Feedback "0..*" --> "1" Packages : about
+
+  Reservation "0..*" --> "1" Client : client
+  Reservation "0..*" --> "1" Packages : package
+  Reservation "0..*" --> "0..1" Guide : guide
+
+  %% Enum associations
+  Client --> Gender
+  Guide --> Gender
+  Guide --> GuideStatus
+  Packages --> PackageStatus
+  Reservation --> ReservationStatus
+  Payment --> PaymentStatus
+  Refund --> RefundStatus
+
