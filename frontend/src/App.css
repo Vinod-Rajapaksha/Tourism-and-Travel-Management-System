@@ -1,0 +1,73 @@
+.app-wrapper {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.app-content {
+  width: 100%;
+}
+
+.mobile-sidebar .app-sidebar {
+  transform: translateX(-100%);
+  transition: transform .25s ease;
+}
+.mobile-sidebar.show .app-sidebar { transform: translateX(0); }
+
+.mobile-overlay {
+  display: none;
+}
+.mobile-overlay.show {
+  display: block;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  z-index: 1049;
+}
+.mobile-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 280px;
+  z-index: 1050;
+}
+
+.promotions-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.promotion-card {
+  background: white;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease;
+}
+
+.promotion-card:hover {
+  transform: translateY(-5px);
+}
+
+.promotion-card h2 {
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.promotion-card p {
+  color: #666;
+  line-height: 1.6;
+}
+
+.discount {
+  display: inline-block;
+  background: #ff6b6b;
+  color: white;
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-weight: bold;
+  margin-top: 15px;
+}
