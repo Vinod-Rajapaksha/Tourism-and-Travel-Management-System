@@ -10,6 +10,9 @@ public interface GuideRepository extends JpaRepository<Guide, Long> {
 
     boolean existsByEmailIgnoreCase(String email);
 
+    java.util.Optional<Guide> findByEmail(String email);
+    java.util.Optional<Guide> findByEmailIgnoreCase(String email);
+
     boolean existsByNic(String nic);
 
     boolean existsByEmailIgnoreCaseAndGuideIDNot(String email, Long guideID);

@@ -30,7 +30,6 @@ public class GuideController {
                 } catch (Exception e) {
                         String errorMessage = e.getMessage();
 
-                        // Check if it's a duplicate email error
                         if (errorMessage != null &&
                                         (errorMessage.contains("UQ__Guides__AB6E6164") ||
                                                         errorMessage.toLowerCase().contains("email") ||
@@ -46,7 +45,6 @@ public class GuideController {
                                                                 "field", "email"));
                         }
 
-                        // Check if it's a duplicate NIC error
                         if (errorMessage != null &&
                                         (errorMessage.contains("UQ__Guides__")
                                                         && errorMessage.toLowerCase().contains("nic"))
@@ -63,7 +61,6 @@ public class GuideController {
                                                                 "field", "nic"));
                         }
 
-                        // Other errors
                         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                                         .body(Map.of("error", "Failed to create guide: " + errorMessage));
                 }
@@ -77,7 +74,6 @@ public class GuideController {
                 } catch (Exception e) {
                         String errorMessage = e.getMessage();
 
-                        // Check if it's a duplicate email error
                         if (errorMessage != null &&
                                         (errorMessage.contains("UQ__Guides__AB6E6164") ||
                                                         errorMessage.toLowerCase().contains("email") ||
@@ -93,7 +89,6 @@ public class GuideController {
                                                                 "field", "email"));
                         }
 
-                        // Check if it's a duplicate NIC error
                         if (errorMessage != null &&
                                         (errorMessage.contains("UQ__Guides__")
                                                         && errorMessage.toLowerCase().contains("nic"))
@@ -110,7 +105,6 @@ public class GuideController {
                                                                 "field", "nic"));
                         }
 
-                        // Other errors
                         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                                         .body(Map.of("error", "Failed to update guide: " + errorMessage));
                 }

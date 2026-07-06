@@ -1,0 +1,9 @@
+.tourist-dashboard-container {
+  color: #f8fafc;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.hover-border-warning:hover {
+  border-color: #f59e0b !important;
+  transform: translateY(-3px);
+}

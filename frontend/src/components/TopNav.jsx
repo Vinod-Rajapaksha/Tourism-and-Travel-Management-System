@@ -4,12 +4,12 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import "../assets/admin.css";
 import profileSvg from "../assets/img/undraw_profile.svg";
-import { useLoader } from "../context/LoaderContext"; 
+import { useLoader } from "../context/LoaderContext";
 
 const Topbar = ({ userName, onToggleSidebar, onLogout, rightItems }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { setLoading } = useLoader(); 
+  const { setLoading } = useLoader();
 
   const [open, setOpen] = useState(false);
   const btnRef = useRef(null);
@@ -69,9 +69,9 @@ const Topbar = ({ userName, onToggleSidebar, onLogout, rightItems }) => {
     close();
     setLoading(true);
     setTimeout(() => {
-      navigate("/profile");
+      navigate("/staff/profile");
       setLoading(false);
-    }, 800); 
+    }, 800);
   };
 
   return (

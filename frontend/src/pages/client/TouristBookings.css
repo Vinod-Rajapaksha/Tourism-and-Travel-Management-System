@@ -1,0 +1,8 @@
+.bookings-page-container {
+  color: #f8fafc;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.max-w-md {
+  max-width: 500px;
+}

@@ -7,6 +7,7 @@ import {
   changeAdminPassword,
 } from "../../api/Admin";
 import Swal from "sweetalert2";
+import { exportToCSV } from "../../utils/exportUtils";
 
 const emptyForm = {
   firstName: "",
@@ -276,6 +277,21 @@ export default function ModernAdminsPage() {
   useEffect(() => {
     load();
   }, [q, page, size, isAuthenticated]);
+
+  const gmCount = useMemo(() => data.filter(a => a.role === "GENERAL_MANAGER").length, [data]);
+  const stcCount = useMemo(() => data.filter(a => a.role === "SENIOR_TRAVEL_CONSULTANT").length, [data]);
+  const otherCount = useMemo(() => data.length - gmCount - stcCount, [data, gmCount, stcCount]);
+
+  const handleExportCSV = () => {
+    exportToCSV(data, "admin_users_list", [
+      { key: "adminID", label: "Admin ID" },
+      { key: "fName", label: "First Name" },
+      { key: "lName", label: "Last Name" },
+      { key: "email", label: "Email" },
+      { key: "role", label: "System Role" },
+      { key: "phone", label: "Phone" }
+    ]);
+  };
 
   function onCreate() {
     if (!isAuthenticated) {
@@ -563,6 +579,58 @@ export default function ModernAdminsPage() {
         </ModernCard>
       )}
 
+      {/* KPI Stat Cards */}
+      <div className="row g-3 mb-4">
+        <div className="col-12 col-md-6 col-xl-3">
+          <ModernCard className="kpi-card">
+            <div className="card-body py-4 d-flex justify-content-between align-items-center">
+              <div>
+                <div className="text-uppercase small fw-semibold text-muted mb-1">Total Admins</div>
+                <div className="fs-3 fw-bold text-dark">{total}</div>
+                <div className="text-muted small">Registered in system</div>
+              </div>
+              <div className="display-6 theme-accent opacity-75"><i className="bi bi-shield-lock"></i></div>
+            </div>
+          </ModernCard>
+        </div>
+        <div className="col-12 col-md-6 col-xl-3">
+          <ModernCard className="kpi-card">
+            <div className="card-body py-4 d-flex justify-content-between align-items-center">
+              <div>
+                <div className="text-uppercase small fw-semibold text-muted mb-1">General Managers</div>
+                <div className="fs-3 fw-bold text-dark">{gmCount}</div>
+                <div className="text-muted small">Executive level</div>
+              </div>
+              <div className="display-6 text-primary opacity-75"><i className="bi bi-person-badge"></i></div>
+            </div>
+          </ModernCard>
+        </div>
+        <div className="col-12 col-md-6 col-xl-3">
+          <ModernCard className="kpi-card">
+            <div className="card-body py-4 d-flex justify-content-between align-items-center">
+              <div>
+                <div className="text-uppercase small fw-semibold text-muted mb-1">Travel Consultants</div>
+                <div className="fs-3 fw-bold text-dark">{stcCount}</div>
+                <div className="text-muted small">Senior package creators</div>
+              </div>
+              <div className="display-6 text-success opacity-75"><i className="bi bi-briefcase"></i></div>
+            </div>
+          </ModernCard>
+        </div>
+        <div className="col-12 col-md-6 col-xl-3">
+          <ModernCard className="kpi-card">
+            <div className="card-body py-4 d-flex justify-content-between align-items-center">
+              <div>
+                <div className="text-uppercase small fw-semibold text-muted mb-1">Marketing & CS</div>
+                <div className="fs-3 fw-bold text-dark">{otherCount}</div>
+                <div className="text-muted small">Specialised teams</div>
+              </div>
+              <div className="display-6 text-warning opacity-75"><i className="bi bi-headset"></i></div>
+            </div>
+          </ModernCard>
+        </div>
+      </div>
+
       {/* Main Content Card */}
       <ModernCard>
         <div className="card-header bg-transparent border-0 py-4">
@@ -583,9 +651,16 @@ export default function ModernAdminsPage() {
               </div>
             </div>
             <div className="col-md-6">
-              <div className="d-flex gap-2 justify-content-md-end">
+              <div className="d-flex gap-2 justify-content-md-end align-items-center">
+                <button 
+                  className="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-sm d-flex align-items-center gap-1"
+                  onClick={handleExportCSV}
+                  title="Export CSV"
+                >
+                  <i className="fas fa-file-csv"></i> Export CSV
+                </button>
                 <select
-                  className="form-select modern-input w-auto"
+                  className="form-select modern-input w-auto form-select-sm"
                   value={size}
                   onChange={(e) => {
                     setPage(0);
@@ -597,9 +672,10 @@ export default function ModernAdminsPage() {
                   <option value={50}>50 per page</option>
                 </select>
                 <button 
-                  className="btn btn-outline-primary"
+                  className="btn btn-outline-primary btn-sm rounded-circle"
                   onClick={load}
                   disabled={loading}
+                  title="Refresh"
                 >
                   <i className={`fas fa-sync-alt ${loading ? 'fa-spin' : ''}`}></i>
                 </button>

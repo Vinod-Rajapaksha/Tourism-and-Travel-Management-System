@@ -76,6 +76,24 @@ export function AuthProvider({ children }) {
           setUser(normalized);
         }
       },
+      async loginWithToken(newToken) {
+        setToken(newToken);
+        setItem("token", newToken);
+        const me = await getProfile(newToken);
+        const normalized = me && (me.roles || me.role)
+          ? {
+              email: me.email,
+              roles: Array.isArray(me.roles)
+                ? me.roles
+                : me.role
+                ? [me.role]
+                : [],
+            }
+          : null;
+        if (normalized && normalized.roles.length) {
+          setUser(normalized);
+        }
+      },
       async logout() {
         try {
           await logoutApi(token);

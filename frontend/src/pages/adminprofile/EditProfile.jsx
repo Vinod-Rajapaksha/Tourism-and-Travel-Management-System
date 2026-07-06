@@ -2,12 +2,11 @@ import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
-import profileSvg from "../../assets/img/undraw_profile.svg";
-import "../../assets/admin.css";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 const API_BASE = "http://localhost:8080";
 
-const EditProfile = () => {
+export default function EditProfile() {
   const [profile, setProfile] = useState(null);
   const [formData, setFormData] = useState({
     fname: "",
@@ -22,29 +21,14 @@ const EditProfile = () => {
   const [saving, setSaving] = useState(false);
 
   const navigate = useNavigate();
-  const token = useMemo(() => localStorage.getItem("token"), []);
-
-  // Enhanced validation functions
-  const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const validatePhone = (phone) => {
-    const phoneRegex = /^[0-9]{10}$/;
-    return phoneRegex.test(phone.replace(/[-\s]/g, ''));
-  };
-
-  const validatePassword = (password) => {
-    return password.length >= 8;
-  };
+  const token = useMemo(() => localStorage.getItem("token") || sessionStorage.getItem("token"), []);
 
   useEffect(() => {
     const controller = new AbortController();
 
     const fetchProfile = async () => {
       if (!token) {
-        await Swal.fire("Session expired", "Please log in again.", "info");
+        await Swal.fire("Session Expired", "Please log in again.", "info");
         navigate("/login", { replace: true });
         return;
       }
@@ -67,12 +51,13 @@ const EditProfile = () => {
         const status = err?.response?.status;
         console.error("Error fetching profile", err);
         if (status === 401 || status === 403) {
-          await Swal.fire("Session expired", "Please log in again.", "info");
+          await Swal.fire("Session Expired", "Please log in again.", "info");
           localStorage.removeItem("token");
+          sessionStorage.removeItem("token");
           navigate("/login", { replace: true });
           return;
         }
-        await Swal.fire("Error", "Couldn't load your profile.", "error");
+        await Swal.fire("Error", "Could not load your profile.", "error");
       } finally {
         setLoading(false);
       }
@@ -85,60 +70,30 @@ const EditProfile = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
   const validate = () => {
     const newErrors = {};
+    if (!formData.fname.trim()) newErrors.fname = "First name is required";
+    else if (formData.fname.trim().length < 2) newErrors.fname = "First name must be at least 2 characters";
 
-    // First Name validation - enhanced
-    if (!formData.fname.trim()) {
-      newErrors.fname = "First name is required";
-    } else if (formData.fname.trim().length < 2) {
-      newErrors.fname = "First name must be at least 2 characters";
-    } else if (formData.fname.trim().length > 50) {
-      newErrors.fname = "First name cannot exceed 50 characters";
+    if (!formData.lname.trim()) newErrors.lname = "Last name is required";
+    else if (formData.lname.trim().length < 2) newErrors.lname = "Last name must be at least 2 characters";
+
+    if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
+    else if (!/^[0-9]{10}$/.test(formData.phone.replace(/[-\s]/g, ""))) newErrors.phone = "Must be a valid 10-digit number";
+
+    if (!formData.email.trim()) newErrors.email = "Email is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = "Invalid email address format";
+
+    if (formData.password && formData.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
     }
-
-    // Last Name validation - enhanced
-    if (!formData.lname.trim()) {
-      newErrors.lname = "Last name is required";
-    } else if (formData.lname.trim().length < 2) {
-      newErrors.lname = "Last name must be at least 2 characters";
-    } else if (formData.lname.trim().length > 50) {
-      newErrors.lname = "Last name cannot exceed 50 characters";
-    }
-
-    // Email validation - enhanced
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
-    }
-
-    // Phone validation - enhanced
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Phone number is required";
-    } else if (!validatePhone(formData.phone)) {
-      newErrors.phone = "Please enter a valid 10-digit phone number";
-    }
-
-    // Password validation - enhanced
-    if (formData.password || formData.confirmPassword) {
-      if (!formData.password) {
-        newErrors.password = "Password is required when confirming password";
-      } else if (!validatePassword(formData.password)) {
-        newErrors.password = "Password must be at least 8 characters long";
-      }
-
-      if (!formData.confirmPassword) {
-        newErrors.confirmPassword = "Please confirm your password";
-      } else if (formData.password !== formData.confirmPassword) {
-        newErrors.confirmPassword = "Passwords do not match";
-      }
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
     }
 
     setErrors(newErrors);
@@ -149,219 +104,173 @@ const EditProfile = () => {
     e.preventDefault();
     if (!validate()) return;
 
-    const payload = {
-      fname: formData.fname.trim(),
-      lname: formData.lname.trim(),
-      phone: formData.phone.trim(),
-      email: formData.email.trim(),
-    };
-    if (formData.password) payload.password = formData.password;
-
+    setSaving(true);
     try {
-      setSaving(true);
+      const payload = {
+        fname: formData.fname.trim(),
+        lname: formData.lname.trim(),
+        phone: formData.phone.trim(),
+        email: formData.email.trim(),
+      };
+      if (formData.password) payload.password = formData.password;
+
       await axios.put(`${API_BASE}/api/admin/profile`, payload, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
-      await Swal.fire("Saved", "Your profile was updated successfully!", "success");
-      navigate("/profile", { replace: true });
+      await Swal.fire("Updated!", "Your profile information has been saved successfully.", "success");
+      navigate("/admin-profile");
     } catch (err) {
-      console.error("Failed to update profile", err);
-      const status = err?.response?.status;
-      if (status === 401 || status === 403) {
-        await Swal.fire("Session expired", "Please log in again.", "info");
-        localStorage.removeItem("token");
-        navigate("/login", { replace: true });
-        return;
-      }
-      const errorMessage = err?.response?.data?.message || "Failed to update profile. Please try again.";
-      Swal.fire("Error", errorMessage, "error");
+      console.error("Error saving profile:", err);
+      const msg = err.response?.data?.message || "Failed to update profile.";
+      Swal.fire("Save Failed", msg, "error");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleCancel = () => navigate("/profile");
-
   if (loading) {
     return (
-      <div className="container mt-5">
-        <div className="profile-card skeleton">
-          <div className="skeleton-bar w-25 mb-4"></div>
-          <div className="row">
-            {[...Array(6)].map((_, i) => (
-              <div className="col-md-4 mb-3" key={i}>
-                <div className="skeleton-field" />
-              </div>
-            ))}
-          </div>
+      <div className="container-fluid py-4">
+        <div className="card modern-card border-0 shadow-sm p-5 text-center">
+          <div className="spinner-border text-primary mx-auto mb-3" />
+          <p className="text-muted">Loading profile editor...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mt-5">
-      <div className="profile-card">
-        <form onSubmit={handleSubmit} noValidate>
-          <div className="profile-img-wrapper">
-            <img id="profilePicture" src={profileSvg} alt="Profile" className="profile-img" />
-          </div>
-
-          <div className="d-flex justify-content-between align-items-center mb-5">
-            <h3 className="m-0">Edit Profile</h3>
-            <button type="submit" className="btn edit-btn" disabled={saving}>
-              <i className="fas fa-save me-2" /> {saving ? "Saving..." : "Save Changes"}
-            </button>
-          </div>
-
-          <div className="row">
-            {/* First Name */}
-            <div className="col-md-4 mb-3">
-              <label className="form-label text-white" htmlFor="fname">First Name *</label>
-              <div className={`profile-field ${errors.fname ? "is-invalid" : ""}`}>
-                <i className="fas fa-user me-2" aria-hidden="true"></i>
-                <input
-                  id="fname"
-                  type="text"
-                  className="profile-field-2 form-control"
-                  name="fname"
-                  value={formData.fname}
-                  onChange={handleChange}
-                  placeholder="Your first name (2-50 characters)"
-                  aria-invalid={!!errors.fname}
-                  aria-describedby={errors.fname ? "fname-error" : undefined}
-                  maxLength={50}
-                />
-              </div>
-              {errors.fname && (
-                <small id="fname-error" className="text-warning">{errors.fname}</small>
-              )}
+    <div className="container-fluid py-4">
+      <div className="row align-items-center mb-4">
+        <div className="col">
+          <div className="d-flex align-items-center gap-3">
+            <div className="p-3 rounded-3 bg-primary-soft">
+              <i className="fas fa-user-edit text-primary fa-lg"></i>
             </div>
-
-            {/* Last Name */}
-            <div className="col-md-4 mb-3">
-              <label className="form-label text-white" htmlFor="lname">Last Name *</label>
-              <div className={`profile-field ${errors.lname ? "is-invalid" : ""}`}>
-                <i className="fas fa-user me-2" aria-hidden="true"></i>
-                <input
-                  id="lname"
-                  type="text"
-                  className="profile-field-2 form-control"
-                  name="lname"
-                  value={formData.lname}
-                  onChange={handleChange}
-                  placeholder="Your last name (2-50 characters)"
-                  aria-invalid={!!errors.lname}
-                  aria-describedby={errors.lname ? "lname-error" : undefined}
-                  maxLength={50}
-                />
-              </div>
-              {errors.lname && (
-                <small id="lname-error" className="text-warning">{errors.lname}</small>
-              )}
-            </div>
-
-            {/* Phone */}
-            <div className="col-md-4 mb-3">
-              <label className="form-label text-white" htmlFor="phone">Phone *</label>
-              <div className={`profile-field ${errors.phone ? "is-invalid" : ""}`}>
-                <i className="fas fa-phone me-2" aria-hidden="true"></i>
-                <input
-                  id="phone"
-                  type="tel"
-                  className="profile-field-2 form-control"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  placeholder="10-digit phone number"
-                  aria-invalid={!!errors.phone}
-                  aria-describedby={errors.phone ? "phone-error" : undefined}
-                  maxLength={10}
-                />
-              </div>
-              {errors.phone && (
-                <small id="phone-error" className="text-warning">{errors.phone}</small>
-              )}
-            </div>
-
-            {/* Email */}
-            <div className="col-md-4 mb-3">
-              <label className="form-label text-white" htmlFor="email">Email *</label>
-              <div className={`profile-field ${errors.email ? "is-invalid" : ""}`}>
-                <i className="fas fa-envelope me-2" aria-hidden="true"></i>
-                <input
-                  id="email"
-                  type="email"
-                  className="profile-field-2 form-control"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="name@example.com"
-                  aria-invalid={!!errors.email}
-                  aria-describedby={errors.email ? "email-error" : undefined}
-                  maxLength={100}
-                />
-              </div>
-              {errors.email && (
-                <small id="email-error" className="text-warning">{errors.email}</small>
-              )}
-            </div>
-
-            {/* Password*/}
-            <div className="col-md-4 mb-3">
-              <label className="form-label text-white" htmlFor="password">New Password</label>
-              <div className={`profile-field ${errors.password ? "is-invalid" : ""}`}>
-                <i className="fas fa-lock me-2" aria-hidden="true"></i>
-                <input
-                  id="password"
-                  type="password"
-                  className="profile-field-2 form-control"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Minimum 8 characters"
-                  autoComplete="new-password"
-                  aria-invalid={!!errors.password}
-                  aria-describedby={errors.password ? "password-error" : undefined}
-                  minLength={8}
-                />
-              </div>
-              {errors.password && (
-                <small id="password-error" className="text-warning">{errors.password}</small>
-              )}
-            </div>
-
-            {/* Confirm Password */}
-            <div className="col-md-4 mb-3">
-              <label className="form-label text-white" htmlFor="confirmPassword">Confirm Password</label>
-              <div className={`profile-field ${errors.confirmPassword ? "is-invalid" : ""}`}>
-                <i className="fas fa-lock me-2" aria-hidden="true"></i>
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  className="profile-field-2 form-control"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  placeholder="Repeat password"
-                  autoComplete="new-password"
-                  aria-invalid={!!errors.confirmPassword}
-                  aria-describedby={errors.confirmPassword ? "confirm-error" : undefined}
-                  minLength={8}
-                />
-              </div>
-              {errors.confirmPassword && (
-                <small id="confirm-error" className="text-warning">{errors.confirmPassword}</small>
-              )}
+            <div>
+              <h1 className="h3 fw-bold text-dark mb-1">Edit Account Profile</h1>
+              <p className="text-muted mb-0">Update your personal contact details and account security credentials</p>
             </div>
           </div>
-            <button type="button" className="btn btn-danger delete-btn" onClick={handleCancel} disabled={saving}>
-              Cancel
-            </button>
-        </form>
+        </div>
+        <div className="col-auto">
+          <button className="btn btn-outline-secondary rounded-pill px-4" onClick={() => navigate("/admin-profile")} disabled={saving}>
+            <i className="fas fa-arrow-left me-2"></i> Back to Profile
+          </button>
+        </div>
+      </div>
+
+      <div className="row justify-content-center">
+        <div className="col-xl-8 col-lg-10">
+          <div className="card modern-card border-0 shadow-sm overflow-hidden">
+            <div className="card-header bg-transparent border-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-center">
+              <h5 className="fw-bold text-dark mb-0">Profile Information Form</h5>
+              <span className="text-muted small">* Indicates required field</span>
+            </div>
+            <div className="card-body p-4">
+              <form onSubmit={handleSubmit} noValidate>
+                <div className="row g-3 mb-4">
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold text-dark small">First Name *</label>
+                    <input
+                      type="text"
+                      className={`form-control modern-input ${errors.fname ? "is-invalid" : ""}`}
+                      name="fname"
+                      value={formData.fname}
+                      onChange={handleChange}
+                      placeholder="Enter first name"
+                    />
+                    {errors.fname && <div className="invalid-feedback">{errors.fname}</div>}
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold text-dark small">Last Name *</label>
+                    <input
+                      type="text"
+                      className={`form-control modern-input ${errors.lname ? "is-invalid" : ""}`}
+                      name="lname"
+                      value={formData.lname}
+                      onChange={handleChange}
+                      placeholder="Enter last name"
+                    />
+                    {errors.lname && <div className="invalid-feedback">{errors.lname}</div>}
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold text-dark small">Email Address *</label>
+                    <input
+                      type="email"
+                      className={`form-control modern-input ${errors.email ? "is-invalid" : ""}`}
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="name@example.com"
+                    />
+                    {errors.email && <div className="invalid-feedback">{errors.email}</div>}
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold text-dark small">Phone Number *</label>
+                    <input
+                      type="tel"
+                      className={`form-control modern-input ${errors.phone ? "is-invalid" : ""}`}
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="10-digit number"
+                    />
+                    {errors.phone && <div className="invalid-feedback">{errors.phone}</div>}
+                  </div>
+                </div>
+
+                <hr className="my-4 text-muted opacity-25" />
+
+                <h6 className="fw-bold text-dark mb-1">Change Account Password</h6>
+                <p className="text-muted small mb-3">Leave blank if you do not wish to change your current password.</p>
+                
+                <div className="row g-3 mb-4">
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold text-dark small">New Password</label>
+                    <input
+                      type="password"
+                      className={`form-control modern-input ${errors.password ? "is-invalid" : ""}`}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="Min 8 characters"
+                      autoComplete="new-password"
+                    />
+                    {errors.password && <div className="invalid-feedback">{errors.password}</div>}
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold text-dark small">Confirm New Password</label>
+                    <input
+                      type="password"
+                      className={`form-control modern-input ${errors.confirmPassword ? "is-invalid" : ""}`}
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      placeholder="Repeat new password"
+                      autoComplete="new-password"
+                    />
+                    {errors.confirmPassword && <div className="invalid-feedback">{errors.confirmPassword}</div>}
+                  </div>
+                </div>
+
+                <div className="d-flex justify-content-end gap-2 pt-3 border-top">
+                  <button type="button" className="btn btn-outline-secondary rounded-pill px-4" onClick={() => navigate("/admin-profile")} disabled={saving}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-primary rounded-pill px-5 shadow-sm fw-medium" disabled={saving}>
+                    {saving ? <><span className="spinner-border spinner-border-sm me-2" /> Saving...</> : "Save Changes"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
-};
-
-export default EditProfile;
+}

@@ -8,16 +8,21 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
-  const { setLoading } = useLoader(); 
+  const { setLoading } = useLoader();
 
-  const qs = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const qs = useMemo(
+    () => new URLSearchParams(location.search),
+    [location.search],
+  );
   const success = qs.get("success");
   const urlError = qs.get("error");
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState(urlError || "");
-  const [justRegistered, setJustRegistered] = useState(success === "registered");
+  const [justRegistered, setJustRegistered] = useState(
+    success === "registered",
+  );
 
   useEffect(() => {
     if (justRegistered) {
@@ -34,7 +39,7 @@ export default function Login() {
     const start = Date.now();
     try {
       await login(form);
-      navigate("/dashboard");
+      navigate(location.pathname.includes("staff") ? "/staff/dashboard" : "/admin/dashboard");
     } catch (err) {
       setError(err?.response?.data?.message || "Invalid credentials");
     } finally {
@@ -44,6 +49,9 @@ export default function Login() {
     }
   };
 
+  const isStaffRoute = location.pathname.includes("staff");
+  const portalName = isStaffRoute ? "Staff" : "Admin";
+
   return (
     <div className="admin-login-page">
       <div className="background" aria-hidden="true" />
@@ -51,17 +59,23 @@ export default function Login() {
       <div className="container">
         <div className="content">
           {justRegistered && (
-            <div id="popup-message" className="popup-success" role="status" aria-live="polite">
+            <div
+              id="popup-message"
+              className="popup-success"
+              role="status"
+              aria-live="polite"
+            >
               🎉 Registration successful! You can now log in.
             </div>
           )}
 
           <h2 className="logo">
-            <i className="fas fa-key" aria-hidden />Admin
+            <i className="fas fa-key" aria-hidden />
+            {portalName}
           </h2>
           <div className="text-sci">
             <h2>
-              <span>Login Your Admin Account</span>
+              <span>Login Your {portalName} Account</span>
             </h2>
           </div>
           {error && <div className="alert alert-danger">{error}</div>}
@@ -70,7 +84,12 @@ export default function Login() {
         <div className="logreg-box">
           <div className="form-container active">
             <div className="form-box">
-              <form className="user" style={{ marginTop: "2rem" }} onSubmit={onSubmit} noValidate>
+              <form
+                className="user"
+                style={{ marginTop: "2rem" }}
+                onSubmit={onSubmit}
+                noValidate
+              >
                 <h2>Welcome Back!</h2>
 
                 <div className="input-box mt-5">
@@ -81,7 +100,9 @@ export default function Login() {
                     required
                     placeholder=" "
                     value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, email: e.target.value })
+                    }
                     autoComplete="email"
                     aria-describedby="email-label"
                     autoFocus
@@ -100,7 +121,9 @@ export default function Login() {
                     required
                     placeholder=" "
                     value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, password: e.target.value })
+                    }
                     autoComplete="current-password"
                     aria-describedby="password-label"
                   />

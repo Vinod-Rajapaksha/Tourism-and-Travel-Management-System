@@ -1,30 +1,109 @@
-import React from "react";
 import { NavLink } from "react-router-dom";
 import "../assets/admin.css";
-import { useLoader } from "../context/LoaderContext"; 
+import { useLoader } from "../context/LoaderContext";
+import { useAuth } from "../hooks/useAuth";
 
 export default function SideNav({ currentRole, toggled = false, onItemClick }) {
-  const { setLoading } = useLoader(); 
+  const { setLoading } = useLoader();
+  const { user } = useAuth();
+  const effectiveRole = currentRole || user?.roles?.[0];
 
   const items = [
     { header: "Interface" },
-    { to: "/dashboard", icon: "fas fa-fw fa-tachometer-alt", label: "Dashboard", end: true },
+    {
+      to: "/staff/dashboard",
+      icon: "fas fa-fw fa-tachometer-alt",
+      label: "Staff Dashboard",
+      end: false,
+      roles: [
+        "GENERAL_MANAGER",
+        "ADMIN",
+        "SENIOR_TRAVEL_CONSULTANT",
+        "CUSTOMER_SERVICE_EXECUTIVE",
+        "MARKETING_MANAGER",
+      ],
+    },
+    {
+      to: "/dashboard",
+      icon: "fas fa-fw fa-tachometer-alt",
+      label: "My Dashboard",
+      end: true,
+      roles: ["TOURIST"],
+    },
+    {
+      to: "/guide/dashboard",
+      icon: "fas fa-fw fa-tachometer-alt",
+      label: "Guide Dashboard",
+      end: true,
+      roles: ["GUIDE"],
+    },
     { divider: true },
-    { header: "Management" },
-    { to: "/admins", icon: "fas fa-fw fa-user-shield", label: "Admin Management", roles: ["GENERAL_MANAGER"] },
-    { to: "/users", icon: "fas fa-fw fa-users", label: "User Management", roles: ["GENERAL_MANAGER","SENIOR_TRAVEL_CONSULTANT","CUSTOMER_SERVICE_EXECUTIVE"] },
-    { to: "/guides", icon: "fas fa-fw fa-person-hiking", label: "Your Guide Management", roles: ["GENERAL_MANAGER","SENIOR_TRAVEL_CONSULTANT"] },
-    { to: "/tourpackages", icon: "fas fa-fw fa-box-open", label: "Tour Package Management", roles: ["GENERAL_MANAGER","MARKETING_MANAGER","SENIOR_TRAVEL_CONSULTANT"] },
-    { to: "/availability", icon: "fas fa-fw fa-calendar-check", label: "Tour Package Availability", roles: ["GENERAL_MANAGER","MARKETING_MANAGER","SENIOR_TRAVEL_CONSULTANT"] },
-    // { to: "/reservation", icon: "fas fa-fw fa-calendar", label: "Reservation Management", roles: ["GENERAL_MANAGER","CUSTOMER_SERVICE_EXECUTIVE","SENIOR_TRAVEL_CONSULTANT"] },
-    // { to: "/payments", icon: "fas fa-fw fa-credit-card", label: "Payment Management", roles: ["GENERAL_MANAGER","CUSTOMER_SERVICE_EXECUTIVE"] },
-    { divider: true },
-    // { header: "Analytics" },
-    // { to: "/analytics", icon: "fas fa-fw fa-chart-line", label: "Analytics / Reports", roles: ["GENERAL_MANAGER","MARKETING_MANAGER"] },
+    {
+      header: "Management",
+      roles: [
+        "GENERAL_MANAGER",
+        "ADMIN",
+        "SENIOR_TRAVEL_CONSULTANT",
+        "CUSTOMER_SERVICE_EXECUTIVE",
+        "MARKETING_MANAGER",
+      ],
+    },
+    {
+      to: "/staff/admins",
+      icon: "fas fa-fw fa-user-shield",
+      label: "Admin Management",
+      roles: ["GENERAL_MANAGER", "ADMIN"],
+    },
+    {
+      to: "/staff/users",
+      icon: "fas fa-fw fa-users",
+      label: "User Management",
+      roles: [
+        "GENERAL_MANAGER",
+        "ADMIN",
+        "SENIOR_TRAVEL_CONSULTANT",
+        "CUSTOMER_SERVICE_EXECUTIVE",
+      ],
+    },
+    {
+      to: "/staff/guides",
+      icon: "fas fa-fw fa-person-hiking",
+      label: "Guide Management",
+      roles: ["GENERAL_MANAGER", "ADMIN", "SENIOR_TRAVEL_CONSULTANT"],
+    },
+    {
+      to: "/staff/tourpackages",
+      icon: "fas fa-fw fa-box-open",
+      label: "Tour Package Management",
+      roles: [
+        "GENERAL_MANAGER",
+        "ADMIN",
+        "MARKETING_MANAGER",
+        "SENIOR_TRAVEL_CONSULTANT",
+      ],
+    },
+    {
+      to: "/staff/availability",
+      icon: "fas fa-fw fa-calendar-check",
+      label: "Tour Package Availability",
+      roles: [
+        "GENERAL_MANAGER",
+        "ADMIN",
+        "MARKETING_MANAGER",
+        "SENIOR_TRAVEL_CONSULTANT",
+      ],
+    },
+    {
+      to: "/staff/calendar",
+      icon: "fas fa-fw fa-calendar-alt",
+      label: "Promotions Calendar",
+      roles: ["GENERAL_MANAGER", "ADMIN", "MARKETING_MANAGER"],
+    },
     { divider: true, dmdblock: true },
   ];
 
-  const visible = (it) => !it.roles || !currentRole || it.roles.includes(currentRole);
+  const visible = (it) =>
+    !it.roles || !effectiveRole || it.roles.includes(effectiveRole);
 
   const handleNavClick = (onItemClick) => {
     setLoading(true);
@@ -74,7 +153,9 @@ export default function SideNav({ currentRole, toggled = false, onItemClick }) {
             <NavLink
               to={it.to}
               end={it.end}
-              className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+              className={({ isActive }) =>
+                `nav-link ${isActive ? "active" : ""}`
+              }
               onClick={() => handleNavClick(onItemClick)}
             >
               <i className={it.icon}></i>

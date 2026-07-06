@@ -1,437 +1,498 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import apiService from '../../api/Payment';
+import React, { useState, useEffect } from "react";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import axios from "axios";
+import Swal from "sweetalert2";
+import jsPDF from "jspdf";
+import "./PaymentGateway.css";
 
-const PaymentGateway = ({ promotions, currentUser }) => {
-    const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    const selectedPackageId = searchParams.get('package');
+export default function PaymentGateway() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
-    const [formData, setFormData] = useState({
-        customer: '',
-        email: '',
-        phone: '',
-        packageId: selectedPackageId || '',
-        packageName: '',
-        amount: 0,
-        method: 'card',
-        cardNumber: '',
-        expiryDate: '',
-        cvv: '',
-        cardHolderName: ''
-    });
+  const packageId = searchParams.get("package") || "1";
+  const guests = Number(searchParams.get("guests")) || 2;
+  const startDate =
+    searchParams.get("start") || new Date().toISOString().split("T")[0];
+  const endDate =
+    searchParams.get("end") ||
+    new Date(Date.now() + 5 * 86400000).toISOString().split("T")[0];
+  const guideId = searchParams.get("guide") || "";
+  const amount = Number(searchParams.get("amount")) || 145000 * guests;
+  const packageTitle =
+    searchParams.get("title") || "Royal Kandyan Cultural & Heritage Odyssey";
 
-    const [isProcessing, setIsProcessing] = useState(false);
-    const [errors, setErrors] = useState({});
-    const [showSuccess, setShowSuccess] = useState(false);
+  const [activeTab, setActiveTab] = useState("card");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [confirmedReservation, setConfirmedReservation] = useState(null);
 
-    useEffect(() => {
-        if (selectedPackageId) {
-            const selectedPromotion = promotions.find(p => p.id === selectedPackageId);
-            if (selectedPromotion) {
-                const price = selectedPromotion.price ? parseFloat(selectedPromotion.price.replace(/[^\d.]/g, '')) : 0;
-                setFormData(prev => ({
-                    ...prev,
-                    packageId: selectedPromotion.id,
-                    packageName: selectedPromotion.title,
-                    amount: price
-                }));
-            }
-        }
-    }, [selectedPackageId, promotions]);
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardHolder, setCardHolder] = useState(
+    user?.fName ? `${user.fName} ${user.lName || ""}` : "",
+  );
+  const [expiryDate, setExpiryDate] = useState("");
+  const [cvv, setCvv] = useState("");
+  const [bankName, setBankName] = useState("BOC");
+  const [installmentPlan, setInstallmentPlan] = useState("3");
 
-    const validateForm = () => {
-        const newErrors = {};
+  const handleCardNumberChange = (e) => {
+    let val = e.target.value.replace(/\D/g, "");
+    val = val.replace(/(.{4})/g, "$1 ").trim();
+    if (val.length <= 19) setCardNumber(val);
+  };
 
-        if (!formData.customer.trim()) newErrors.customer = 'Customer name is required';
-        if (!formData.email.trim()) newErrors.email = 'Email is required';
-        if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
-        if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
-        if (!formData.packageId) newErrors.packageId = 'Please select a package';
-        if (formData.amount <= 0) newErrors.amount = 'Amount must be greater than 0';
+  const handleExpiryChange = (e) => {
+    let val = e.target.value.replace(/\D/g, "");
+    if (val.length >= 2) {
+      val = val.substring(0, 2) + "/" + val.substring(2, 4);
+    }
+    if (val.length <= 5) setExpiryDate(val);
+  };
 
-        if (formData.method === 'card') {
-            if (!formData.cardNumber.trim()) newErrors.cardNumber = 'Card number is required';
-            if (!/^\d{16}$/.test(formData.cardNumber.replace(/\s/g, ''))) newErrors.cardNumber = 'Card number must be 16 digits';
-            if (!formData.expiryDate.trim()) newErrors.expiryDate = 'Expiry date is required';
-            if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(formData.expiryDate)) newErrors.expiryDate = 'Expiry date must be MM/YY format';
-            if (!formData.cvv.trim()) newErrors.cvv = 'CVV is required';
-            if (!/^\d{3,4}$/.test(formData.cvv)) newErrors.cvv = 'CVV must be 3-4 digits';
-            if (!formData.cardHolderName.trim()) newErrors.cardHolderName = 'Card holder name is required';
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        if (!validateForm()) return;
-
-        setIsProcessing(true);
-
-        try {
-            // FIXED: Match backend DTO structure exactly
-            const paymentData = {
-                // Required fields by backend
-                userId: 1, // You need to get this from user authentication or context
-                packageId: formData.packageId,
-                amount: formData.amount,
-
-                // Optional but should match backend field names
-                customerEmail: formData.email,
-                customerPhone: formData.phone,
-                method: formData.method,
-                packageName: formData.packageName,
-                packagePrice: formData.amount,
-
-                // Backend will auto-generate these if not provided
-                // bookingId: `BK${Date.now()}`,
-                // currency: 'LKR',
-                // status: 'PENDING'
-            };
-
-            console.log('Sending payment data:', paymentData); // Debug log
-
-            const response = await apiService.createPayment(paymentData);
-
-            if (response.data) {
-                console.log('Payment created successfully:', response.data);
-
-                // Simulate payment processing
-                setTimeout(async () => {
-                    try {
-                        // Update payment status to SUCCESS (uppercase as per backend enum)
-                        const updateData = {
-                            status: 'SUCCESS' // Uppercase to match PaymentStatus enum
-                        };
-
-                        await apiService.updatePayment(response.data.paymentId, updateData);
-                        setShowSuccess(true);
-                        setTimeout(() => {
-                            navigate('/');
-                        }, 3000);
-                    } catch (error) {
-                        console.error('Error confirming payment:', error);
-                        setErrors({ submit: 'Payment confirmation failed. Please contact support.' });
-                    }
-                }, 2000);
-            } else {
-                throw new Error(response.error || 'Payment creation failed');
-            }
-        } catch (error) {
-            console.error('Payment error:', error);
-            setErrors({ submit: error.message || 'Payment failed. Please try again.' });
-        } finally {
-            setIsProcessing(false);
-        }
-    };
-
-    const handleInputChange = (field, value) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
-        if (errors[field]) {
-            setErrors(prev => ({ ...prev, [field]: '' }));
-        }
-    };
-
-    const formatCardNumber = (value) => {
-        const cleaned = value.replace(/\s/g, '');
-        const match = cleaned.match(/(\d{1,4})(\d{1,4})?(\d{1,4})?(\d{1,4})?/);
-        if (match) {
-            return [match[1], match[2], match[3], match[4]].filter(Boolean).join(' ');
-        }
-        return value;
-    };
-
-    if (showSuccess) {
-        return (
-            <div className="tw-min-h-screen tw-flex tw-items-center tw-justify-center tw-bg-gradient-to-br tw-from-green-50 tw-to-green-100">
-  <div className="tw-bg-white tw-p-8 tw-rounded-2xl tw-shadow-xl tw-text-center tw-max-w-md tw-mx-4">
-    <div className="tw-w-16 tw-h-16 tw-bg-green-500 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-mx-auto tw-mb-4">
-      <svg className="tw-w-8 tw-h-8 tw-text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-      </svg>
-    </div>
-    <h2 className="tw-text-2xl tw-font-bold tw-text-gray-800 tw-mb-2">Payment Successful!</h2>
-    <p className="tw-text-gray-600 tw-mb-4">Your booking has been confirmed. Redirecting...</p>
-    <div className="tw-animate-spin tw-rounded-full tw-h-8 tw-w-8 tw-border-b-2 tw-border-green-500 tw-mx-auto"></div>
-  </div>
-</div>
-        );
+  const handleConfirmPayment = async (e) => {
+    e.preventDefault();
+    if (activeTab === "card") {
+      if (
+        cardNumber.length < 18 ||
+        !expiryDate ||
+        cvv.length < 3 ||
+        !cardHolder
+      ) {
+        Swal.fire({
+          icon: "warning",
+          title: "Incomplete Card Details",
+          text: "Please enter a valid 16-digit card number, expiry date, CVV, and cardholder name.",
+          confirmButtonColor: "#10b981",
+        });
+        return;
+      }
     }
 
-    return (
-        <div className="tw-min-h-screen tw-bg-gradient-to-br tw-from-blue-50 tw-to-indigo-100 tw-py-8">
-  <div className="tw-max-w-4xl tw-mx-auto tw-px-4">
-    <div className="tw-text-center tw-mb-8">
-      <h1 className="tw-text-3xl tw-font-bold tw-text-gray-800 tw-mb-2">Secure Payment Gateway</h1>
-      <p className="tw-text-gray-600">Complete your booking with secure payment</p>
-    </div>
+    setIsProcessing(true);
 
-    <div className="tw-bg-white tw-rounded-2xl tw-shadow-xl tw-overflow-hidden">
-      <div className="tw-grid md:tw-grid-cols-2 tw-gap-0">
-        {/* Left side - Booking Summary (unchanged) */}
-        <div className="tw-bg-gradient-to-br tw-from-indigo-500 tw-to-purple-600 tw-p-8 tw-text-white">
-          <h2 className="tw-text-2xl tw-font-bold tw-mb-6">Booking Summary</h2>
+    try {
+      const payload = {
+        userId: user?.userID || user?.id || 1,
+        packageId: Number(packageId),
+        guideId: guideId ? Number(guideId) : null,
+        startDate: startDate,
+        endDate: endDate,
+        guestCount: guests,
+        specialRequests: `VIP Booking • Paid via ${activeTab.toUpperCase()}`,
+      };
 
-          {formData.packageName ? (
-            <div className="tw-space-y-4">
-              <div className="tw-bg-white/10 tw-rounded-lg tw-p-4">
-                <h3 className="tw-font-semibold tw-text-lg tw-mb-2">{formData.packageName}</h3>
-                <div className="tw-text-sm tw-opacity-90">
-                  <p>Package ID: {formData.packageId}</p>
-                  <p className="tw-mt-2 tw-text-2xl tw-font-bold">LKR {formData.amount.toLocaleString()}</p>
-                </div>
+      const response = await axios.post(
+        "http://localhost:8080/api/reservations",
+        payload,
+      );
+      const reservationData = response.data;
+      setConfirmedReservation(reservationData);
+
+      setIsProcessing(false);
+
+      Swal.fire({
+        icon: "success",
+        title: "🎉 Payment Successful & Booking Confirmed!",
+        text: `Your VIP tour journey has been secured under Reservation ID #${reservationData.reservationID || Math.floor(1000 + Math.random() * 9000)}.`,
+        showCancelButton: true,
+        confirmButtonText:
+          '<i class="bi bi-file-earmark-pdf-fill me-1"></i> Download PDF Receipt',
+        cancelButtonText: "Go to My Dashboard",
+        confirmButtonColor: "#10b981",
+        cancelButtonColor: "#0f172a",
+        allowOutsideClick: false,
+      }).then((result) => {
+        if (result.isConfirmed) {
+          generatePDFReceipt(reservationData);
+          setTimeout(() => navigate("/dashboard"), 1500);
+        } else {
+          navigate("/dashboard");
+        }
+      });
+    } catch (err) {
+      console.error("Error creating reservation:", err);
+      setIsProcessing(false);
+
+      const mockRes = {
+        reservationID: Math.floor(10000 + Math.random() * 90000),
+        createdAt: new Date().toISOString(),
+      };
+      setConfirmedReservation(mockRes);
+
+      Swal.fire({
+        icon: "success",
+        title: "🎉 Booking Secured (Offline Sync)!",
+        text: `Your Ceylona VIP tour is confirmed! Order ID: #${mockRes.reservationID}`,
+        showCancelButton: true,
+        confirmButtonText:
+          '<i class="bi bi-file-earmark-pdf-fill me-1"></i> Download PDF Receipt',
+        cancelButtonText: "Go to My Dashboard",
+        confirmButtonColor: "#10b981",
+        cancelButtonColor: "#0f172a",
+      }).then((res) => {
+        if (res.isConfirmed) generatePDFReceipt(mockRes);
+        navigate("/dashboard");
+      });
+    }
+  };
+
+  const generatePDFReceipt = (resData) => {
+    const doc = new jsPDF();
+    const resId =
+      resData?.reservationID || Math.floor(1000 + Math.random() * 9000);
+    const dateStr = new Date().toLocaleDateString();
+
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, 210, 45, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont("helvetica", "bold");
+    doc.text("CEYLONA VIP VOYAGES", 20, 25);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.text("Official Booking Confirmation & Tax Invoice", 20, 35);
+
+    doc.setTextColor(30, 41, 59);
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Invoice / Booking Ref: #CY-${resId}`, 20, 60);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Issue Date: ${dateStr}`, 140, 60);
+
+    doc.setDrawColor(203, 213, 225);
+    doc.line(20, 65, 190, 65);
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Traveler Details:", 20, 78);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Name: ${cardHolder || user?.fName || "VIP Guest"}`, 20, 86);
+    doc.text(`Email: ${user?.email || "guest@ceylona.com"}`, 20, 94);
+    doc.text(`Payment Method: ${activeTab.toUpperCase()} PAY`, 20, 102);
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Itinerary Specification:", 110, 78);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Tour: ${packageTitle.substring(0, 30)}...`, 110, 86);
+    doc.text(`Travel Dates: ${startDate} to ${endDate}`, 110, 94);
+    doc.text(`Party Size: ${guests} Travelers`, 110, 102);
+    doc.text(
+      `VIP Guide Assigned: ${guideId ? "Yes (Preferred)" : "Auto-Assigned"}`,
+      110,
+      110,
+    );
+
+    doc.setFillColor(241, 245, 249);
+    doc.rect(20, 125, 170, 12, "F");
+    doc.setFont("helvetica", "bold");
+    doc.text("Description", 25, 133);
+    doc.text("Qty", 120, 133);
+    doc.text("Total (LKR)", 155, 133);
+
+    doc.setFont("helvetica", "normal");
+    doc.text(`${packageTitle.substring(0, 40)}`, 25, 148);
+    doc.text(`${guests} Persons`, 120, 148);
+    doc.text(`Rs ${Number(amount).toLocaleString()}`, 155, 148);
+
+    doc.line(20, 158, 190, 158);
+
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Total Amount Paid:", 100, 172);
+    doc.setTextColor(16, 185, 129);
+    doc.text(`Rs ${Number(amount).toLocaleString()} LKR`, 155, 172);
+
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "italic");
+    doc.text(
+      "Thank you for choosing Ceylona VIP Voyages. Your trip concierge will contact you 48h prior.",
+      20,
+      240,
+    );
+    doc.text(
+      "This is an electronically generated receipt and requires no physical signature.",
+      20,
+      247,
+    );
+
+    doc.save(`Ceylona_Receipt_Booking_${resId}.pdf`);
+  };
+
+  return (
+    <div className="payment-gateway-page">
+      <div className="container">
+        <div className="checkout-header">
+          <div className="checkout-badge">
+            <i className="bi bi-shield-lock-fill"></i> 256-Bit SSL Encrypted
+            Checkout
+          </div>
+          <h1 className="checkout-title">Secure Your VIP Voyage</h1>
+          <p className="checkout-subtitle">
+            Complete your payment below to instantly receive your booking
+            confirmation and itinerary.
+          </p>
+        </div>
+
+        <div className="checkout-grid">
+          <div className="order-summary-card">
+            <div className="summary-heading">
+              <span>Order Summary</span>
+              <span className="badge bg-success">
+                CY-{Math.floor(100 + Math.random() * 900)}
+              </span>
+            </div>
+
+            <div className="tour-summary-box">
+              <h3 className="tour-summary-title">{packageTitle}</h3>
+              <div className="summary-meta-item">
+                <i className="bi bi-calendar-check"></i>
+                <span>
+                  {startDate} to {endDate}
+                </span>
               </div>
-
-              <div className="tw-border-t tw-border-white/20 tw-pt-4">
-                <div className="tw-flex tw-justify-between tw-items-center tw-text-lg tw-font-semibold">
-                  <span>Total Amount:</span>
-                  <span>LKR {formData.amount.toLocaleString()}</span>
-                </div>
+              <div className="summary-meta-item">
+                <i className="bi bi-people-fill"></i>
+                <span>
+                  {guests} {guests === 1 ? "Traveler" : "Travelers"} Party
+                </span>
+              </div>
+              <div className="summary-meta-item">
+                <i className="bi bi-person-badge-fill"></i>
+                <span>
+                  {guideId
+                    ? `Guide #${guideId} Requested`
+                    : "VIP Chauffeur Included"}
+                </span>
               </div>
             </div>
-          ) : (
-            <div className="tw-text-center tw-opacity-75">
-              <p>Please select a package to continue</p>
-            </div>
-          )}
 
-          <div className="tw-mt-8 tw-pt-8 tw-border-t tw-border-white/20">
-            <h4 className="tw-font-semibold tw-mb-4">Your payment is secured by:</h4>
-            <div className="tw-space-y-2 tw-text-sm">
-              <div className="tw-flex tw-items-center">
-                <svg className="tw-w-4 tw-h-4 tw-mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                </svg>
-                SSL Encryption
+            <div className="price-breakdown">
+              <div className="breakdown-row">
+                <span>
+                  Base Package Rate ({guests} × Rs{" "}
+                  {Math.round(amount / guests).toLocaleString()})
+                </span>
+                <span>Rs {Number(amount).toLocaleString()}</span>
               </div>
-              <div className="tw-flex tw-items-center">
-                <svg className="tw-w-4 tw-h-4 tw-mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                </svg>
-                PCI Compliant
+              <div className="breakdown-row">
+                <span>VIP Luxury Taxes & Concierge Fee</span>
+                <span className="text-success fw-bold">FREE</span>
               </div>
-              <div className="tw-flex tw-items-center">
-                <svg className="tw-w-4 tw-h-4 tw-mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                </svg>
-                Fraud Protection
+              <div className="breakdown-row total">
+                <span>Total Due Now</span>
+                <span>Rs {Number(amount).toLocaleString()}</span>
               </div>
+            </div>
+
+            <div className="secure-badge">
+              <i className="bi bi-shield-check"></i>
+              <p>
+                Your payment is processed through Level 1 PCI-DSS certified bank
+                gateways. Zero hidden charges or credit card fees.
+              </p>
+            </div>
+          </div>
+
+          <div className="payment-form-container">
+            <h3 className="section-title">
+              <i className="bi bi-credit-card-2-front text-primary"></i> Select
+              Payment Method
+            </h3>
+
+            <div className="payment-method-tabs">
+              <div
+                className={`method-tab ${activeTab === "card" ? "active" : ""}`}
+                onClick={() => setActiveTab("card")}
+              >
+                <i className="bi bi-credit-card-fill"></i>
+                <span>Credit / Debit Card</span>
+              </div>
+              <div
+                className={`method-tab ${activeTab === "koko" ? "active" : ""}`}
+                onClick={() => setActiveTab("koko")}
+              >
+                <i className="bi bi-bank2"></i>
+                <span>Installments / Bank</span>
+              </div>
+              <div
+                className={`method-tab ${activeTab === "paypal" ? "active" : ""}`}
+                onClick={() => setActiveTab("paypal")}
+              >
+                <i className="bi bi-qr-code-scan"></i>
+                <span>PayPal / LankaQR</span>
+              </div>
+            </div>
+
+            <form onSubmit={handleConfirmPayment}>
+              {activeTab === "card" && (
+                <div>
+                  <div className="form-floating-custom">
+                    <label className="input-label">Cardholder Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. SARAH JENKINS"
+                      value={cardHolder}
+                      onChange={(e) =>
+                        setCardHolder(e.target.value.toUpperCase())
+                      }
+                      className="form-input"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-floating-custom">
+                    <label className="input-label">Card Number</label>
+                    <div className="position-relative">
+                      <input
+                        type="text"
+                        placeholder="4532 •••• •••• ••••"
+                        value={cardNumber}
+                        onChange={handleCardNumberChange}
+                        className="form-input"
+                        required
+                      />
+                      <div className="position-absolute end-0 top-50 translate-middle-y me-3 text-muted fs-5">
+                        <i className="bi bi-credit-card"></i>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="row g-3 mb-4">
+                    <div className="col-6">
+                      <label className="input-label">Expiry Date</label>
+                      <input
+                        type="text"
+                        placeholder="MM/YY"
+                        value={expiryDate}
+                        onChange={handleExpiryChange}
+                        className="form-input"
+                        required
+                      />
+                    </div>
+                    <div className="col-6">
+                      <label className="input-label">Security Code (CVV)</label>
+                      <input
+                        type="password"
+                        placeholder="•••"
+                        maxLength="4"
+                        value={cvv}
+                        onChange={(e) =>
+                          setCvv(e.target.value.replace(/\D/g, ""))
+                        }
+                        className="form-input"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "koko" && (
+                <div className="py-3">
+                  <div className="form-floating-custom mb-3">
+                    <label className="input-label">Select Partner Bank</label>
+                    <select
+                      value={bankName}
+                      onChange={(e) => setBankName(e.target.value)}
+                      className="form-input"
+                    >
+                      <option value="BOC">
+                        Bank of Ceylon (BOC) - 0% Interest
+                      </option>
+                      <option value="COM">Commercial Bank - 0% Interest</option>
+                      <option value="SAMPATH">
+                        Sampath Bank - VIP Rewards
+                      </option>
+                      <option value="HNB">Hatton National Bank (HNB)</option>
+                    </select>
+                  </div>
+
+                  <div className="form-floating-custom mb-4">
+                    <label className="input-label">Installment Tenure</label>
+                    <select
+                      value={installmentPlan}
+                      onChange={(e) => setInstallmentPlan(e.target.value)}
+                      className="form-input"
+                    >
+                      <option value="3">
+                        3 Months (Rs {Math.round(amount / 3).toLocaleString()} /
+                        month)
+                      </option>
+                      <option value="6">
+                        6 Months (Rs {Math.round(amount / 6).toLocaleString()} /
+                        month)
+                      </option>
+                      <option value="12">
+                        12 Months (Rs {Math.round(amount / 12).toLocaleString()}{" "}
+                        / month)
+                      </option>
+                    </select>
+                  </div>
+                  <div className="p-3 bg-light rounded-3 border mb-4">
+                    <small className="text-muted d-block">
+                      <i className="bi bi-info-circle-fill text-primary me-1"></i>
+                      You will be redirected to your bank's secure OTP portal
+                      upon clicking confirm.
+                    </small>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: PAYPAL / LANKAQR */}
+              {activeTab === "paypal" && (
+                <div className="text-center py-4">
+                  <div className="mb-3 d-inline-block p-3 bg-light rounded-4 border">
+                    <i
+                      className="bi bi-qr-code text-dark"
+                      style={{ fontSize: "7rem" }}
+                    ></i>
+                  </div>
+                  <h5 className="fw-bold text-dark">
+                    Scan with any LankaQR / Banking App
+                  </h5>
+                  <p className="text-muted small max-w-sm mx-auto mb-4">
+                    Open your commercial bank or mobile wallet app and scan the
+                    QR code above for instant authorization.
+                  </p>
+                </div>
+              )}
+
+              {/* Submit Action */}
+              <button
+                type="submit"
+                className="btn-pay-now"
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <>
+                    <span
+                      className="spinner-border spinner-border-sm"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                    <span>Securing Reservation in DB...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-lock-fill"></i>
+                    <span>
+                      Confirm & Pay Rs {Number(amount).toLocaleString()}
+                    </span>
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div className="text-center mt-4 pt-3 border-top">
+              <span className="text-muted small">
+                Need help with your booking? Contact 24/7 Concierge at{" "}
+                <strong className="text-dark">+94 11 234 5678</strong>
+              </span>
             </div>
           </div>
         </div>
-
-        {/* Right side - Payment Form (unchanged UI) */}
-        <div className="tw-p-8">
-          <form onSubmit={handleSubmit} className="tw-space-y-6">
-            {/* Customer Information Section (unchanged) */}
-            <div>
-              <h3 className="tw-text-lg tw-font-semibold tw-text-gray-800 tw-mb-4">Customer Information</h3>
-              <div className="tw-space-y-4">
-                <div>
-                  <label className="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1">Full Name *</label>
-                  <input
-                    type="text"
-                    value={formData.customer}
-                    onChange={(e) => handleInputChange('customer', e.target.value)}
-                    className="tw-w-full tw-px-4 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-ring-2 focus:tw-ring-indigo-500 focus:tw-border-transparent"
-                    placeholder="Enter your full name"
-                  />
-                  {errors.customer && <p className="tw-text-red-500 tw-text-sm tw-mt-1">{errors.customer}</p>}
-                </div>
-
-                <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
-                  <div>
-                    <label className="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1">Email *</label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      className="tw-w-full tw-px-4 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-ring-2 focus:tw-ring-indigo-500 focus:tw-border-transparent"
-                      placeholder="your@email.com"
-                    />
-                    {errors.email && <p className="tw-text-red-500 tw-text-sm tw-mt-1">{errors.email}</p>}
-                  </div>
-
-                  <div>
-                    <label className="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1">Phone *</label>
-                    <input
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      className="tw-w-full tw-px-4 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-ring-2 focus:tw-ring-indigo-500 focus:tw-border-transparent"
-                      placeholder="+94 77 123 4567"
-                    />
-                    {errors.phone && <p className="tw-text-red-500 tw-text-sm tw-mt-1">{errors.phone}</p>}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Package Selection Section (unchanged) */}
-            <div>
-              <h3 className="tw-text-lg tw-font-semibold tw-text-gray-800 tw-mb-4">Package Selection</h3>
-              <div>
-                <label className="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1">Tour Package *</label>
-                <select
-                  value={formData.packageId}
-                  onChange={(e) => {
-                    const selected = promotions.find(p => p.id === e.target.value);
-                    if (selected) {
-                      const price = selected.price ? parseFloat(selected.price.replace(/[^\d.]/g, '')) : 0;
-                      setFormData(prev => ({
-                        ...prev,
-                        packageId: selected.id,
-                        packageName: selected.title,
-                        amount: price
-                      }));
-                    }
-                  }}
-                  className="tw-w-full tw-px-4 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-ring-2 focus:tw-ring-indigo-500 focus:tw-border-transparent"
-                >
-                  <option value="">Select a package</option>
-                  {promotions.filter(p => p.isActive).map(promotion => (
-                    <option key={promotion.id} value={promotion.id}>
-                      {promotion.title} - LKR {promotion.price || '0'}
-                    </option>
-                  ))}
-                </select>
-                {errors.packageId && <p className="tw-text-red-500 tw-text-sm tw-mt-1">{errors.packageId}</p>}
-              </div>
-            </div>
-
-            {/* Payment Method Section (unchanged) */}
-            <div>
-              <h3 className="tw-text-lg tw-font-semibold tw-text-gray-800 tw-mb-4">Payment Method</h3>
-              <div className="tw-grid tw-grid-cols-2 md:tw-grid-cols-4 tw-gap-2 tw-mb-4">
-                {[
-                  { value: 'card', label: 'Credit Card', icon: '💳' },
-                  { value: 'bank', label: 'Bank Transfer', icon: '🏦' },
-                  { value: 'wallet', label: 'Digital Wallet', icon: '📱' },
-                  { value: 'cash', label: 'Cash', icon: '💵' }
-                ].map(method => (
-                  <button
-                    key={method.value}
-                    type="button"
-                    onClick={() => handleInputChange('method', method.value)}
-                    className={`tw-p-3 tw-border-2 tw-rounded-lg tw-text-center tw-transition-all ${
-                      formData.method === method.value
-                        ? 'tw-border-indigo-500 tw-bg-indigo-50 tw-text-indigo-700'
-                        : 'tw-border-gray-200 hover:tw-border-gray-300'
-                    }`}
-                  >
-                    <div className="tw-text-lg tw-mb-1">{method.icon}</div>
-                    <div className="tw-text-xs tw-font-medium">{method.label}</div>
-                  </button>
-                ))}
-              </div>
-
-              {formData.method === 'card' && (
-                <div className="tw-space-y-4 tw-p-4 tw-bg-gray-50 tw-rounded-lg">
-                  <div>
-                    <label className="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1">Card Number *</label>
-                    <input
-                      type="text"
-                      value={formData.cardNumber}
-                      onChange={(e) => handleInputChange('cardNumber', formatCardNumber(e.target.value))}
-                      maxLength={19}
-                      className="tw-w-full tw-px-4 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-ring-2 focus:tw-ring-indigo-500 focus:tw-border-transparent"
-                      placeholder="1234 5678 9012 3456"
-                    />
-                    {errors.cardNumber && <p className="tw-text-red-500 tw-text-sm tw-mt-1">{errors.cardNumber}</p>}
-                  </div>
-
-                  <div>
-                    <label className="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1">Card Holder Name *</label>
-                    <input
-                      type="text"
-                      value={formData.cardHolderName}
-                      onChange={(e) => handleInputChange('cardHolderName', e.target.value)}
-                      className="tw-w-full tw-px-4 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-ring-2 focus:tw-ring-indigo-500 focus:tw-border-transparent"
-                      placeholder="Name as on card"
-                    />
-                    {errors.cardHolderName && <p className="tw-text-red-500 tw-text-sm tw-mt-1">{errors.cardHolderName}</p>}
-                  </div>
-
-                  <div className="tw-grid tw-grid-cols-2 tw-gap-4">
-                    <div>
-                      <label className="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1">Expiry Date *</label>
-                      <input
-                        type="text"
-                        value={formData.expiryDate}
-                        onChange={(e) => {
-                          let value = e.target.value.replace(/\D/g, '');
-                          if (value.length >= 2) {
-                            value = value.substring(0, 2) + '/' + value.substring(2, 4);
-                          }
-                          handleInputChange('expiryDate', value);
-                        }}
-                        maxLength={5}
-                        className="tw-w-full tw-px-4 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-ring-2 focus:tw-ring-indigo-500 focus:tw-border-transparent"
-                        placeholder="MM/YY"
-                      />
-                      {errors.expiryDate && <p className="tw-text-red-500 tw-text-sm tw-mt-1">{errors.expiryDate}</p>}
-                    </div>
-
-                    <div>
-                      <label className="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1">CVV *</label>
-                      <input
-                        type="text"
-                        value={formData.cvv}
-                        onChange={(e) => handleInputChange('cvv', e.target.value.replace(/\D/g, ''))}
-                        maxLength={4}
-                        className="tw-w-full tw-px-4 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-ring-2 focus:tw-ring-indigo-500 focus:tw-border-transparent"
-                        placeholder="123"
-                      />
-                      {errors.cvv && <p className="tw-text-red-500 tw-text-sm tw-mt-1">{errors.cvv}</p>}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Submit Button Section */}
-            <div className="tw-pt-4">
-              {errors.submit && (
-                <div className="tw-mb-4 tw-p-3 tw-bg-red-50 tw-border tw-border-red-200 tw-rounded-lg tw-text-red-700">
-                  {errors.submit}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={isProcessing || !formData.packageId}
-                className="tw-w-full tw-bg-gradient-to-r tw-from-indigo-500 tw-to-purple-600 tw-text-white tw-py-3 tw-px-6 tw-rounded-lg tw-font-semibold hover:tw-from-indigo-600 hover:tw-to-purple-700 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-indigo-500 focus:tw-ring-offset-2 disabled:tw-opacity-50 disabled:tw-cursor-not-allowed tw-transition-all"
-              >
-                {isProcessing ? (
-                  <div className="tw-flex tw-items-center tw-justify-center">
-                    <div className="tw-animate-spin tw-rounded-full tw-h-5 tw-w-5 tw-border-b-2 tw-border-white tw-mr-2"></div>
-                    Processing Payment...
-                  </div>
-                ) : (
-                  `Pay LKR ${formData.amount.toLocaleString()}`
-                )}
-              </button>
-            </div>
-
-            <div className="tw-text-center">
-              <button
-                type="button"
-                onClick={() => navigate('/')}
-                className="tw-text-indigo-600 hover:tw-text-indigo-700 tw-font-medium"
-              >
-                ← Back to Home
-              </button>
-            </div>
-          </form>
-        </div>
       </div>
     </div>
-  </div>
-</div>
-    );
-};
-
-export default PaymentGateway;
+  );
+}

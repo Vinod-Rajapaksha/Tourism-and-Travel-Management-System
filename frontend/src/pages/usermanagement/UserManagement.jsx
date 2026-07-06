@@ -7,6 +7,7 @@ import {
   changePassword,
 } from "../../api/Client";
 import Swal from "sweetalert2";
+import { exportToCSV } from "../../utils/exportUtils";
 
 const emptyForm = {
   firstName: "",
@@ -21,20 +22,25 @@ const emptyForm = {
 // Modern Avatar Component
 const UserAvatar = ({ name, size = "md" }) => {
   const sizes = { sm: "32px", md: "40px", lg: "48px" };
-  const initials = name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';
-  const colors = ['#2F80ED', '#27AE60', '#F2994A', '#9B51E0', '#EB5757'];
-  const color = colors[name?.length % colors.length] || '#6c757d';
+  const initials =
+    name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase() || "U";
+  const colors = ["#2F80ED", "#27AE60", "#F2994A", "#9B51E0", "#EB5757"];
+  const color = colors[name?.length % colors.length] || "#6c757d";
 
   return (
-    <div 
+    <div
       className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
-      style={{ 
-        width: sizes[size], 
-        height: sizes[size], 
+      style={{
+        width: sizes[size],
+        height: sizes[size],
         backgroundColor: color,
-        fontSize: size === 'sm' ? '12px' : '14px',
+        fontSize: size === "sm" ? "12px" : "14px",
         flex: `0 0 ${sizes[size]}`,
-        aspectRatio: '1 / 1'
+        aspectRatio: "1 / 1",
       }}
     >
       {initials}
@@ -79,31 +85,30 @@ const ModernCard = ({ children, className = "" }) => (
 // Modern Modal Component
 const ModernModal = ({ show, onClose, title, children, size = "md" }) => {
   if (!show) return null;
-  
+
   const sizeClass = {
     sm: "modal-sm",
     md: "",
     lg: "modal-lg",
-    xl: "modal-xl"
+    xl: "modal-xl",
   }[size];
 
   return (
-    <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+    <div
+      className="modal fade show d-block"
+      style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
+    >
       <div className={`modal-dialog modal-dialog-centered ${sizeClass}`}>
         <div className="modal-content modern-modal border-0 shadow-lg">
           <div className="modal-header bg-primary text-white border-0">
-            <h5 className="modal-title fw-semibold">
-              {title}
-            </h5>
+            <h5 className="modal-title fw-semibold">{title}</h5>
             <button
               type="button"
               className="btn-close btn-close-white"
               onClick={onClose}
             />
           </div>
-          <div className="modal-body">
-            {children}
-          </div>
+          <div className="modal-body">{children}</div>
         </div>
       </div>
     </div>
@@ -111,15 +116,15 @@ const ModernModal = ({ show, onClose, title, children, size = "md" }) => {
 };
 
 // Modern Input Component
-const ModernInput = ({ 
-  label, 
-  error, 
-  type = "text", 
-  value, 
-  onChange, 
-  placeholder, 
+const ModernInput = ({
+  label,
+  error,
+  type = "text",
+  value,
+  onChange,
+  placeholder,
   required = false,
-  ...props 
+  ...props
 }) => (
   <div className="mb-3">
     {label && (
@@ -129,7 +134,7 @@ const ModernInput = ({
     )}
     <input
       type={type}
-      className={`form-control modern-input ${error ? 'is-invalid' : ''}`}
+      className={`form-control modern-input ${error ? "is-invalid" : ""}`}
       value={value}
       onChange={onChange}
       placeholder={placeholder}
@@ -144,7 +149,10 @@ const TableRowSkeleton = () => (
   <tr>
     {[...Array(8)].map((_, i) => (
       <td key={i}>
-        <div className="skeleton-line" style={{ width: i === 1 ? '80%' : '60%' }}></div>
+        <div
+          className="skeleton-line"
+          style={{ width: i === 1 ? "80%" : "60%" }}
+        ></div>
       </td>
     ))}
   </tr>
@@ -166,7 +174,10 @@ export default function ModernClientsPage() {
 
   const [showPwd, setShowPwd] = useState(false);
   const [pwdTarget, setPwdTarget] = useState(null);
-  const [pwdForm, setPwdForm] = useState({ currentPassword: "", newPassword: "" });
+  const [pwdForm, setPwdForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+  });
   const [pwdErrors, setPwdErrors] = useState({});
 
   const isAuthenticated = useMemo(() => {
@@ -188,7 +199,7 @@ export default function ModernClientsPage() {
 
   const validatePhone = (phone) => {
     const phoneRegex = /^[0-9]{10}$/;
-    return phoneRegex.test(phone.replace(/[-\s]/g, ''));
+    return phoneRegex.test(phone.replace(/[-\s]/g, ""));
   };
 
   const validatePassword = (password) => {
@@ -199,10 +210,10 @@ export default function ModernClientsPage() {
     Swal.fire({
       title,
       text: message,
-      icon: 'success',
-      confirmButtonColor: '#2F80ED',
+      icon: "success",
+      confirmButtonColor: "#2F80ED",
       timer: 3000,
-      showConfirmButton: true
+      showConfirmButton: true,
     });
   };
 
@@ -210,21 +221,25 @@ export default function ModernClientsPage() {
     Swal.fire({
       title,
       text: message,
-      icon: 'error',
-      confirmButtonColor: '#EB5757'
+      icon: "error",
+      confirmButtonColor: "#EB5757",
     });
   };
 
-  const showConfirmDialog = (title, text, confirmButtonText = "Yes, proceed") => {
+  const showConfirmDialog = (
+    title,
+    text,
+    confirmButtonText = "Yes, proceed",
+  ) => {
     return Swal.fire({
       title,
       text,
-      icon: 'warning',
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#2F80ED',
-      cancelButtonColor: '#6c757d',
+      confirmButtonColor: "#2F80ED",
+      cancelButtonColor: "#6c757d",
       confirmButtonText,
-      cancelButtonText: 'Cancel'
+      cancelButtonText: "Cancel",
     });
   };
 
@@ -244,19 +259,25 @@ export default function ModernClientsPage() {
       console.error("Failed to load clients:", error);
       if (error.response?.status === 403) {
         setError("Access denied. You don't have permission to view clients.");
-        showErrorAlert("Access Denied", "You don't have permission to view clients.");
+        showErrorAlert(
+          "Access Denied",
+          "You don't have permission to view clients.",
+        );
       } else if (error.response?.status === 401) {
         const result = await showConfirmDialog(
-          "Session Expired", 
+          "Session Expired",
           "Your session has expired. Would you like to log in again?",
-          "Yes, Log In"
+          "Yes, Log In",
         );
         if (result.isConfirmed) {
           window.location.href = "/login";
         }
       } else {
         setError("Failed to load clients. Please try again.");
-        showErrorAlert("Loading Failed", "Failed to load clients. Please try again.");
+        showErrorAlert(
+          "Loading Failed",
+          "Failed to load clients. Please try again.",
+        );
       }
     } finally {
       setLoading(false);
@@ -267,9 +288,34 @@ export default function ModernClientsPage() {
     load();
   }, [q, page, size, isAuthenticated]);
 
+  const maleCount = useMemo(
+    () => data.filter((c) => c.gender?.toUpperCase() === "MALE").length,
+    [data],
+  );
+  const femaleCount = useMemo(
+    () => data.filter((c) => c.gender?.toUpperCase() === "FEMALE").length,
+    [data],
+  );
+  const verifiedCount = useMemo(() => data.filter((c) => c.nic).length, [data]);
+
+  const handleExportCSV = () => {
+    exportToCSV(data, "registered_clients_list", [
+      { key: "userID", label: "User ID" },
+      { key: "firstName", label: "First Name" },
+      { key: "lastName", label: "Last Name" },
+      { key: "email", label: "Email Address" },
+      { key: "phone", label: "Phone Number" },
+      { key: "gender", label: "Gender" },
+      { key: "nic", label: "NIC / ID No" },
+    ]);
+  };
+
   function onCreate() {
     if (!isAuthenticated) {
-      showErrorAlert("Authentication Required", "Please log in to create clients.");
+      showErrorAlert(
+        "Authentication Required",
+        "Please log in to create clients.",
+      );
       return;
     }
     setEditId(null);
@@ -280,7 +326,10 @@ export default function ModernClientsPage() {
 
   function onEdit(client) {
     if (!isAuthenticated) {
-      showErrorAlert("Authentication Required", "Please log in to edit clients.");
+      showErrorAlert(
+        "Authentication Required",
+        "Please log in to edit clients.",
+      );
       return;
     }
     setEditId(client.userID);
@@ -299,7 +348,7 @@ export default function ModernClientsPage() {
 
   function validateForm() {
     const errors = {};
-    
+
     // First Name validation
     if (!form.firstName.trim()) {
       errors.firstName = "First name is required";
@@ -329,7 +378,8 @@ export default function ModernClientsPage() {
     if (!form.nic.trim()) {
       errors.nic = "NIC is required";
     } else if (!validateNIC(form.nic)) {
-      errors.nic = "Please enter a valid NIC number (9 digits + V or 12 digits)";
+      errors.nic =
+        "Please enter a valid NIC number (9 digits + V or 12 digits)";
     }
 
     // Phone validation
@@ -354,16 +404,22 @@ export default function ModernClientsPage() {
 
   async function onSubmitForm(e) {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     try {
       if (editId == null) {
         await createClient(form);
-        showSuccessAlert("Client Created", "Client has been created successfully!");
+        showSuccessAlert(
+          "Client Created",
+          "Client has been created successfully!",
+        );
       } else {
         await updateClient(editId, form);
-        showSuccessAlert("Client Updated", "Client information has been updated successfully!");
+        showSuccessAlert(
+          "Client Updated",
+          "Client information has been updated successfully!",
+        );
       }
       setShowForm(false);
       await load();
@@ -372,7 +428,9 @@ export default function ModernClientsPage() {
       if (error.response?.data?.errors) {
         setFormErrors(error.response.data.errors);
       } else {
-        const errorMessage = error?.response?.data?.message || "Failed to save client. Please try again.";
+        const errorMessage =
+          error?.response?.data?.message ||
+          "Failed to save client. Please try again.";
         showErrorAlert("Save Failed", errorMessage);
       }
     }
@@ -380,34 +438,46 @@ export default function ModernClientsPage() {
 
   async function onDelete(id) {
     if (!isAuthenticated) {
-      showErrorAlert("Authentication Required", "Please log in to delete clients.");
+      showErrorAlert(
+        "Authentication Required",
+        "Please log in to delete clients.",
+      );
       return;
     }
 
-    const client = data.find(c => c.userID === id);
-    const clientName = client ? `${client.firstName} ${client.lastName}` : 'this client';
+    const client = data.find((c) => c.userID === id);
+    const clientName = client
+      ? `${client.firstName} ${client.lastName}`
+      : "this client";
 
     const result = await showConfirmDialog(
       "Confirm Delete",
       `Are you sure you want to delete ${clientName}? This action cannot be undone.`,
-      "Yes, Delete"
+      "Yes, Delete",
     );
 
     if (!result.isConfirmed) return;
-    
+
     try {
       await deleteClient(id);
-      showSuccessAlert("Client Deleted", `${clientName} has been deleted successfully.`);
+      showSuccessAlert(
+        "Client Deleted",
+        `${clientName} has been deleted successfully.`,
+      );
       await load();
     } catch (err) {
-      const msg = err?.response?.data?.message || "Delete failed. Please try again.";
+      const msg =
+        err?.response?.data?.message || "Delete failed. Please try again.";
       showErrorAlert("Delete Failed", msg);
     }
   }
 
   function openPwd(id) {
     if (!isAuthenticated) {
-      showErrorAlert("Authentication Required", "Please log in to change passwords.");
+      showErrorAlert(
+        "Authentication Required",
+        "Please log in to change passwords.",
+      );
       return;
     }
     setPwdTarget(id);
@@ -418,17 +488,18 @@ export default function ModernClientsPage() {
 
   function validatePasswordForm() {
     const errors = {};
-    
+
     if (!pwdForm.currentPassword) {
       errors.currentPassword = "Current password is required";
     }
-    
+
     if (!pwdForm.newPassword) {
       errors.newPassword = "New password is required";
     } else if (pwdForm.newPassword.length < 8) {
       errors.newPassword = "New password must be at least 8 characters";
     } else if (pwdForm.currentPassword === pwdForm.newPassword) {
-      errors.newPassword = "New password must be different from current password";
+      errors.newPassword =
+        "New password must be different from current password";
     }
 
     setPwdErrors(errors);
@@ -437,35 +508,43 @@ export default function ModernClientsPage() {
 
   async function submitPwd(e) {
     e.preventDefault();
-    
+
     if (!validatePasswordForm()) return;
 
     try {
       await changePassword(pwdTarget, pwdForm);
       setShowPwd(false);
-      showSuccessAlert("Password Updated", "Password has been changed successfully!");
+      showSuccessAlert(
+        "Password Updated",
+        "Password has been changed successfully!",
+      );
     } catch (error) {
       console.error("Failed to change password:", error);
       if (error.response?.data?.errors) {
         setPwdErrors(error.response.data.errors);
       } else {
-        const errorMessage = error?.response?.data?.message || "Failed to change password. Please try again.";
+        const errorMessage =
+          error?.response?.data?.message ||
+          "Failed to change password. Please try again.";
         showErrorAlert("Password Change Failed", errorMessage);
       }
     }
   }
 
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(total / size)), [total, size]);
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(total / size)),
+    [total, size],
+  );
 
   const formatDate = (dateString) => {
     if (!dateString) return "-";
     try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+      return new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       });
     } catch {
       return "-";
@@ -482,8 +561,12 @@ export default function ModernClientsPage() {
                 <div className="display-1 text-muted mb-4">
                   <i className="fas fa-lock"></i>
                 </div>
-                <h3 className="fw-bold text-dark mb-3">Authentication Required</h3>
-                <p className="text-muted mb-4">Please log in to access the clients management system.</p>
+                <h3 className="fw-bold text-dark mb-3">
+                  Authentication Required
+                </h3>
+                <p className="text-muted mb-4">
+                  Please log in to access the clients management system.
+                </p>
                 <a href="/login" className="btn btn-primary btn-lg px-4">
                   <i className="fas fa-sign-in-alt me-2"></i>Go to Login
                 </a>
@@ -506,7 +589,9 @@ export default function ModernClientsPage() {
             </div>
             <div>
               <h1 className="h3 fw-bold text-dark mb-1">Client Management</h1>
-              <p className="text-muted mb-0">Manage your clients efficiently and securely</p>
+              <p className="text-muted mb-0">
+                Manage your clients efficiently and securely
+              </p>
             </div>
           </div>
         </div>
@@ -527,14 +612,82 @@ export default function ModernClientsPage() {
                 <h6 className="fw-semibold text-dark mb-1">Error</h6>
                 <p className="text-muted mb-0">{error}</p>
               </div>
-              <button 
-                className="btn-close" 
+              <button
+                className="btn-close"
                 onClick={() => setError("")}
               ></button>
             </div>
           </div>
         </ModernCard>
       )}
+
+      {/* KPI Stat Cards */}
+      <div className="row g-3 mb-4">
+        <div className="col-12 col-md-6 col-xl-3">
+          <ModernCard className="kpi-card">
+            <div className="card-body py-4 d-flex justify-content-between align-items-center">
+              <div>
+                <div className="text-uppercase small fw-semibold text-muted mb-1">
+                  Total Clients
+                </div>
+                <div className="fs-3 fw-bold text-dark">{total}</div>
+                <div className="text-muted small">Registered tourists</div>
+              </div>
+              <div className="display-6 theme-accent opacity-75">
+                <i className="bi bi-people-fill"></i>
+              </div>
+            </div>
+          </ModernCard>
+        </div>
+        <div className="col-12 col-md-6 col-xl-3">
+          <ModernCard className="kpi-card">
+            <div className="card-body py-4 d-flex justify-content-between align-items-center">
+              <div>
+                <div className="text-uppercase small fw-semibold text-muted mb-1">
+                  Male Clients
+                </div>
+                <div className="fs-3 fw-bold text-dark">{maleCount}</div>
+                <div className="text-muted small">Demographic split</div>
+              </div>
+              <div className="display-6 text-primary opacity-75">
+                <i className="bi bi-gender-male"></i>
+              </div>
+            </div>
+          </ModernCard>
+        </div>
+        <div className="col-12 col-md-6 col-xl-3">
+          <ModernCard className="kpi-card">
+            <div className="card-body py-4 d-flex justify-content-between align-items-center">
+              <div>
+                <div className="text-uppercase small fw-semibold text-muted mb-1">
+                  Female Clients
+                </div>
+                <div className="fs-3 fw-bold text-dark">{femaleCount}</div>
+                <div className="text-muted small">Demographic split</div>
+              </div>
+              <div className="display-6 text-danger opacity-75">
+                <i className="bi bi-gender-female"></i>
+              </div>
+            </div>
+          </ModernCard>
+        </div>
+        <div className="col-12 col-md-6 col-xl-3">
+          <ModernCard className="kpi-card">
+            <div className="card-body py-4 d-flex justify-content-between align-items-center">
+              <div>
+                <div className="text-uppercase small fw-semibold text-muted mb-1">
+                  Verified NICs
+                </div>
+                <div className="fs-3 fw-bold text-dark">{verifiedCount}</div>
+                <div className="text-muted small">Identity confirmed</div>
+              </div>
+              <div className="display-6 text-success opacity-75">
+                <i className="bi bi-shield-check"></i>
+              </div>
+            </div>
+          </ModernCard>
+        </div>
+      </div>
 
       {/* Main Content Card */}
       <ModernCard>
@@ -556,9 +709,16 @@ export default function ModernClientsPage() {
               </div>
             </div>
             <div className="col-md-6">
-              <div className="d-flex gap-2 justify-content-md-end">
+              <div className="d-flex gap-2 justify-content-md-end align-items-center">
+                <button
+                  className="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-sm d-flex align-items-center gap-1"
+                  onClick={handleExportCSV}
+                  title="Export CSV"
+                >
+                  <i className="fas fa-file-csv"></i> Export CSV
+                </button>
                 <select
-                  className="form-select modern-input w-auto"
+                  className="form-select modern-input w-auto form-select-sm"
                   value={size}
                   onChange={(e) => {
                     setPage(0);
@@ -569,12 +729,15 @@ export default function ModernClientsPage() {
                   <option value={25}>25 per page</option>
                   <option value={50}>50 per page</option>
                 </select>
-                <button 
-                  className="btn btn-outline-primary"
+                <button
+                  className="btn btn-outline-primary btn-sm rounded-circle"
                   onClick={load}
                   disabled={loading}
+                  title="Refresh"
                 >
-                  <i className={`fas fa-sync-alt ${loading ? 'fa-spin' : ''}`}></i>
+                  <i
+                    className={`fas fa-sync-alt ${loading ? "fa-spin" : ""}`}
+                  ></i>
                 </button>
               </div>
             </div>
@@ -603,10 +766,18 @@ export default function ModernClientsPage() {
                       <div className="text-muted">
                         <i className="fas fa-users fa-3x mb-3 opacity-25"></i>
                         <h5 className="fw-semibold">No clients found</h5>
-                        <p>{q ? "No clients match your search criteria." : "Get started by creating your first client."}</p>
+                        <p>
+                          {q
+                            ? "No clients match your search criteria."
+                            : "Get started by creating your first client."}
+                        </p>
                         {!q && (
-                          <button className="btn btn-primary mt-2" onClick={onCreate}>
-                            <i className="fas fa-plus me-2"></i>Create First Client
+                          <button
+                            className="btn btn-primary mt-2"
+                            onClick={onCreate}
+                          >
+                            <i className="fas fa-plus me-2"></i>Create First
+                            Client
                           </button>
                         )}
                       </div>
@@ -617,31 +788,45 @@ export default function ModernClientsPage() {
                     <tr key={client.userID} className="modern-table-row">
                       <td className="ps-4">
                         <div className="d-flex align-items-center gap-3">
-                          <UserAvatar name={`${client.firstName} ${client.lastName}`} />
+                          <UserAvatar
+                            name={`${client.firstName} ${client.lastName}`}
+                          />
                           <div>
                             <h6 className="fw-semibold text-dark mb-1">
                               {client.firstName} {client.lastName}
                             </h6>
-                            <small className="text-muted">ID: #{client.userID}</small>
+                            <small className="text-muted">
+                              ID: #{client.userID}
+                            </small>
                           </div>
                         </div>
                       </td>
                       <td>
                         <div>
-                          <div className="fw-medium text-dark">{client.email}</div>
-                          <small className="text-muted">{client.phone || "-"}</small>
+                          <div className="fw-medium text-dark">
+                            {client.email}
+                          </div>
+                          <small className="text-muted">
+                            {client.phone || "-"}
+                          </small>
                         </div>
                       </td>
                       <td>
-                        <code className="bg-light rounded px-2 py-1">{client.nic || "-"}</code>
+                        <code className="bg-light rounded px-2 py-1">
+                          {client.nic || "-"}
+                        </code>
                       </td>
                       <td>
-                        <span className={`badge bg-${client.gender === 'MALE' ? 'primary' : 'pink'}-soft text-${client.gender === 'MALE' ? 'primary' : 'pink'} rounded-pill`}>
+                        <span
+                          className={`badge bg-${client.gender === "MALE" ? "primary" : "pink"}-soft text-${client.gender === "MALE" ? "primary" : "pink"} rounded-pill`}
+                        >
                           {client.gender}
                         </span>
                       </td>
                       <td>
-                        <small className="text-muted">{formatDate(client.createdAt)}</small>
+                        <small className="text-muted">
+                          {formatDate(client.createdAt)}
+                        </small>
                       </td>
                       <td className="text-center pe-4">
                         <ActionButtons
@@ -664,8 +849,8 @@ export default function ModernClientsPage() {
               <div className="row align-items-center">
                 <div className="col-md-6">
                   <p className="text-muted mb-0">
-                    Showing <strong>{total === 0 ? 0 : page * size + 1}</strong> to{" "}
-                    <strong>{Math.min((page + 1) * size, total)}</strong> of{" "}
+                    Showing <strong>{total === 0 ? 0 : page * size + 1}</strong>{" "}
+                    to <strong>{Math.min((page + 1) * size, total)}</strong> of{" "}
                     <strong>{total}</strong> clients
                   </p>
                 </div>
@@ -682,7 +867,7 @@ export default function ModernClientsPage() {
                     <button
                       className="btn btn-outline-primary btn-sm"
                       disabled={page === 0}
-                      onClick={() => setPage(p => p - 1)}
+                      onClick={() => setPage((p) => p - 1)}
                       title="Previous Page"
                     >
                       <i className="fas fa-angle-left"></i>
@@ -693,7 +878,7 @@ export default function ModernClientsPage() {
                     <button
                       className="btn btn-outline-primary btn-sm"
                       disabled={page + 1 >= totalPages}
-                      onClick={() => setPage(p => p + 1)}
+                      onClick={() => setPage((p) => p + 1)}
                       title="Next Page"
                     >
                       <i className="fas fa-angle-right"></i>
@@ -729,7 +914,8 @@ export default function ModernClientsPage() {
                 value={form.firstName}
                 onChange={(e) => {
                   setForm({ ...form, firstName: e.target.value });
-                  if (formErrors.firstName) setFormErrors({...formErrors, firstName: ''});
+                  if (formErrors.firstName)
+                    setFormErrors({ ...formErrors, firstName: "" });
                 }}
                 error={formErrors.firstName}
                 required
@@ -743,7 +929,8 @@ export default function ModernClientsPage() {
                 value={form.lastName}
                 onChange={(e) => {
                   setForm({ ...form, lastName: e.target.value });
-                  if (formErrors.lastName) setFormErrors({...formErrors, lastName: ''});
+                  if (formErrors.lastName)
+                    setFormErrors({ ...formErrors, lastName: "" });
                 }}
                 error={formErrors.lastName}
                 required
@@ -751,9 +938,11 @@ export default function ModernClientsPage() {
                 placeholder="Enter last name (2-50 characters)"
               />
             </div>
-            
+
             <div className="col-md-4">
-              <label className="form-label fw-semibold text-dark mb-2">Gender</label>
+              <label className="form-label fw-semibold text-dark mb-2">
+                Gender
+              </label>
               <select
                 className="form-select modern-input"
                 value={form.gender}
@@ -763,14 +952,14 @@ export default function ModernClientsPage() {
                 <option value="FEMALE">Female</option>
               </select>
             </div>
-            
+
             <div className="col-md-4">
               <ModernInput
                 label="NIC"
                 value={form.nic}
                 onChange={(e) => {
                   setForm({ ...form, nic: e.target.value.toUpperCase() });
-                  if (formErrors.nic) setFormErrors({...formErrors, nic: ''});
+                  if (formErrors.nic) setFormErrors({ ...formErrors, nic: "" });
                 }}
                 error={formErrors.nic}
                 required
@@ -778,14 +967,15 @@ export default function ModernClientsPage() {
                 placeholder="e.g., 123456789V or 123456789012"
               />
             </div>
-            
+
             <div className="col-md-4">
               <ModernInput
                 label="Phone"
                 value={form.phone}
                 onChange={(e) => {
                   setForm({ ...form, phone: e.target.value });
-                  if (formErrors.phone) setFormErrors({...formErrors, phone: ''});
+                  if (formErrors.phone)
+                    setFormErrors({ ...formErrors, phone: "" });
                 }}
                 error={formErrors.phone}
                 required
@@ -793,7 +983,7 @@ export default function ModernClientsPage() {
                 placeholder="10-digit phone number"
               />
             </div>
-            
+
             <div className="col-md-6">
               <ModernInput
                 label="Email"
@@ -801,7 +991,8 @@ export default function ModernClientsPage() {
                 value={form.email}
                 onChange={(e) => {
                   setForm({ ...form, email: e.target.value });
-                  if (formErrors.email) setFormErrors({...formErrors, email: ''});
+                  if (formErrors.email)
+                    setFormErrors({ ...formErrors, email: "" });
                 }}
                 error={formErrors.email}
                 required
@@ -818,7 +1009,8 @@ export default function ModernClientsPage() {
                   value={form.password}
                   onChange={(e) => {
                     setForm({ ...form, password: e.target.value });
-                    if (formErrors.password) setFormErrors({...formErrors, password: ''});
+                    if (formErrors.password)
+                      setFormErrors({ ...formErrors, password: "" });
                   }}
                   error={formErrors.password}
                   required
@@ -828,7 +1020,7 @@ export default function ModernClientsPage() {
               </div>
             )}
           </div>
-          
+
           <div className="modal-footer border-0 pt-4">
             <button
               type="button"
@@ -858,7 +1050,8 @@ export default function ModernClientsPage() {
             value={pwdForm.currentPassword}
             onChange={(e) => {
               setPwdForm({ ...pwdForm, currentPassword: e.target.value });
-              if (pwdErrors.currentPassword) setPwdErrors({...pwdErrors, currentPassword: ''});
+              if (pwdErrors.currentPassword)
+                setPwdErrors({ ...pwdErrors, currentPassword: "" });
             }}
             error={pwdErrors.currentPassword}
             required
@@ -870,14 +1063,15 @@ export default function ModernClientsPage() {
             value={pwdForm.newPassword}
             onChange={(e) => {
               setPwdForm({ ...pwdForm, newPassword: e.target.value });
-              if (pwdErrors.newPassword) setPwdErrors({...pwdErrors, newPassword: ''});
+              if (pwdErrors.newPassword)
+                setPwdErrors({ ...pwdErrors, newPassword: "" });
             }}
             error={pwdErrors.newPassword}
             required
             minLength={8}
             placeholder="Minimum 8 characters, different from current"
           />
-          
+
           <div className="modal-footer border-0 pt-4">
             <button
               type="button"
@@ -901,16 +1095,16 @@ export default function ModernClientsPage() {
           background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
           transition: all 0.3s ease;
         }
-              
+
         .modern-modal {
           border-radius: 20px;
           overflow: hidden;
         }
-        
+
         .modern-table {
           border: none;
         }
-        
+
         .modern-table thead th {
           border: none;
           font-weight: 600;
@@ -920,35 +1114,35 @@ export default function ModernClientsPage() {
           color: #6c757d;
           padding: 1rem 1.5rem;
         }
-        
+
         .modern-table tbody td {
           padding: 1.25rem 1.5rem;
           border-bottom: 1px solid #f1f3f4;
           vertical-align: middle;
         }
-        
+
         .modern-table-row {
           transition: all 0.2s ease;
           border-left: 4px solid transparent;
         }
-        
+
         .modern-table-row:hover {
           background-color: rgba(47, 128, 237, 0.04) !important;
-          border-left-color: #2F80ED;
+          border-left-color: #2f80ed;
           transform: translateX(4px);
         }
-        
+
         .modern-input {
           border-radius: 12px;
           border: 2px solid #e9ecef;
           transition: all 0.3s ease;
         }
-        
+
         .modern-input:focus {
-          border-color: #2F80ED;
+          border-color: #2f80ed;
           box-shadow: 0 0 0 0.2rem rgba(47, 128, 237, 0.1);
         }
-        
+
         .btn-icon {
           width: 32px;
           height: 32px;
@@ -957,42 +1151,51 @@ export default function ModernClientsPage() {
           justify-content: center;
           transition: all 0.3s ease;
         }
-        
+
         .btn-icon:hover {
           transform: scale(1.1);
         }
-        
+
         .border-left-danger {
-          border-left: 4px solid #EB5757 !important;
+          border-left: 4px solid #eb5757 !important;
         }
-        
+
         .bg-primary-soft {
           background-color: rgba(47, 128, 237, 0.1) !important;
         }
-        
+
         .bg-pink-soft {
           background-color: rgba(235, 87, 87, 0.1) !important;
         }
-        
+
         .text-pink {
-          color: #EB5757 !important;
+          color: #eb5757 !important;
         }
-        
+
         .skeleton-line {
           height: 12px;
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background: linear-gradient(
+            90deg,
+            #f0f0f0 25%,
+            #e0e0e0 50%,
+            #f0f0f0 75%
+          );
           background-size: 200% 100%;
           animation: loading 1.5s infinite;
           border-radius: 6px;
         }
-        
+
         @keyframes loading {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
+          0% {
+            background-position: 200% 0;
+          }
+          100% {
+            background-position: -200% 0;
+          }
         }
-        
+
         .search-box input:focus {
-          border-color: #2F80ED;
+          border-color: #2f80ed;
           box-shadow: 0 0 0 0.2rem rgba(47, 128, 237, 0.1);
         }
         .table-responsive {

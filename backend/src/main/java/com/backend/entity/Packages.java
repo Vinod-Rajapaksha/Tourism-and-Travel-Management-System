@@ -38,6 +38,21 @@ public class Packages {
     @Column(name = "status")
     private PackageStatus status;
 
+    @Column(name = "location")
+    private String location;
+
+    @Column(name = "duration")
+    private String duration;
+
+    @Column(name = "rating")
+    private Double rating;
+
+    @Column(name = "available")
+    private Integer available;
+
+    @Column(name = "category")
+    private String category;
+
     @Column(name = "createdAt")
     private LocalDateTime createdAt = LocalDateTime.now();
 

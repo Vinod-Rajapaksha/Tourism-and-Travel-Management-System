@@ -33,6 +33,12 @@ public class PackageController {
         }
     }
 
+    // READ all packages with availability
+    @GetMapping("/with-availability")
+    public ResponseEntity<List<Packages>> getAllPackagesWithAvailability() {
+        return getAllPackages();
+    }
+
     // READ one package by ID
     @GetMapping("/{id}")
     public ResponseEntity<Packages> getPackageById(@PathVariable Long id) {
@@ -143,7 +149,6 @@ public class PackageController {
                     pkg.getStatus() != null ? pkg.getStatus() : PackageStatus.ACTIVE);
 
             // DON'T update packageID or createdAt - they should remain unchanged
-
             System.out.println("Attempting to update package...");
             Packages updatedPackage = packageRepository.save(existingPackage);
             System.out.println("Successfully updated package: " + updatedPackage);

@@ -3,6 +3,7 @@ package com.backend.controller;
 import com.backend.entity.Reservation;
 import com.backend.entity.enums.ReservationStatus;
 import com.backend.service.ReservationService;
+import com.backend.dto.reservaton.ReservationCreateDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,19 @@ public class ReservationController {
 
     public ReservationController(ReservationService reservationService) {
         this.reservationService = reservationService;
+    }
+
+    // Create a new reservation
+    @PostMapping
+    public ResponseEntity<Reservation> create(@RequestBody ReservationCreateDTO dto) {
+        try {
+            Reservation created = reservationService.createReservation(dto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage());
+        } catch (RuntimeException ex) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage());
+        }
     }
 
     // Get active reservations

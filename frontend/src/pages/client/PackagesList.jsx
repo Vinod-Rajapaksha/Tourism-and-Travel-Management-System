@@ -1,263 +1,242 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import './ClientPackagesPage.css';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
 const ClientPackagesPage = () => {
   const [packages, setPackages] = useState([]);
-  const [selectedPackage, setSelectedPackage] = useState(null);
-  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('price');
+  const [sortBy, setSortBy] = useState('price_low');
+  const [locationFilter, setLocationFilter] = useState('ALL');
+  const [maxPrice, setMaxPrice] = useState(1000000);
+
+  const navigate = useNavigate();
 
   // 🔹 Fetch packages from backend
   useEffect(() => {
+    setLoading(true);
     axios.get("http://localhost:8080/api/packages/with-availability")
       .then((res) => {
-        // Only show ACTIVE packages
-        setPackages(res.data.filter(pkg => pkg.status === "ACTIVE"));
+        const activePkgs = res.data.filter(pkg => pkg.status === "ACTIVE" || !pkg.status);
+        setPackages(activePkgs);
       })
       .catch((err) => {
         console.error("Error fetching packages:", err);
-        // Fallback to regular packages endpoint if with-availability fails
         axios.get("http://localhost:8080/api/packages")
           .then((res) => {
-            setPackages(res.data.filter(pkg => pkg.status === "ACTIVE"));
+            const activePkgs = res.data.filter(pkg => pkg.status === "ACTIVE" || !pkg.status);
+            setPackages(activePkgs);
           })
           .catch((err2) => console.error("Fallback error:", err2));
-      });
+      })
+      .finally(() => setLoading(false));
   }, []);
 
+  // Filter Categories
+  const categories = [
+    { id: 'ALL', label: 'All Regions', icon: 'bi-globe-americas' },
+    { id: 'KANDY', label: 'Kandy & Cultural', icon: 'bi-bank' },
+    { id: 'BEACHES', label: 'Southern Coast', icon: 'bi-water' },
+    { id: 'HIGHLANDS', label: 'Misty Highlands', icon: 'bi-cloud-fog' },
+    { id: 'HERITAGE', label: 'Ancient Heritage', icon: 'bi-shield-check' },
+    { id: 'WILDLIFE', label: 'Wildlife & Safaris', icon: 'bi-tree' },
+  ];
+
   // 🔹 Filter + sort
-  const filteredPackages = packages
-    .filter(pkg =>
-      (pkg.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       pkg.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       pkg.description?.toLowerCase().includes(searchTerm.toLowerCase()))
-    )
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'price':
-          return a.offer - b.offer;
-        case 'rating':
-          return (b.rating || 0) - (a.rating || 0);
-        default:
-          return 0;
-      }
-    });
+  const filteredPackages = useMemo(() => {
+    return packages
+      .filter(pkg => {
+        const matchesSearch = !searchTerm || 
+          (pkg.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           pkg.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           pkg.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           pkg.category?.toLowerCase().includes(searchTerm.toLowerCase()));
+        
+        const matchesCategory = locationFilter === 'ALL' || 
+          pkg.category?.trim().toUpperCase() === locationFilter.trim().toUpperCase() ||
+          pkg.location?.trim().toUpperCase().includes(locationFilter.trim().toUpperCase());
 
-  const handleBooking = (pkg) => {
-    // Check if package is fully booked
-    if (pkg.available !== undefined && pkg.available <= 0) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Fully Booked',
-        text: 'Sorry, this package is fully booked!',
-        confirmButtonColor: '#667eea'
+        const priceVal = pkg.offer || pkg.price || 0;
+        const matchesPrice = priceVal <= maxPrice;
+
+        return matchesSearch && matchesCategory && matchesPrice;
+      })
+      .sort((a, b) => {
+        const priceA = a.offer || a.price || 0;
+        const priceB = b.offer || b.price || 0;
+        switch (sortBy) {
+          case 'price_low':
+            return priceA - priceB;
+          case 'price_high':
+            return priceB - priceA;
+          case 'rating':
+            return (b.rating || 4.8) - (a.rating || 4.8);
+          case 'name':
+            return (a.title || '').localeCompare(b.title || '');
+          default:
+            return 0;
+        }
       });
-      return;
-    }
-
-    // Show confirmation dialog
-    Swal.fire({
-      title: 'Confirm Booking',
-      text: `Are you sure you want to book "${pkg.title}"?`,
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: '#667eea',
-      cancelButtonColor: '#6c757d',
-      confirmButtonText: 'Yes, Book Now!',
-      cancelButtonText: 'Cancel'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        // Show success message
-        Swal.fire({
-          icon: 'success',
-          title: 'Booked Successfully!',
-          text: `Your booking for "${pkg.title}" has been confirmed.`,
-          confirmButtonColor: '#667eea'
-        });
-        // TODO: Add actual booking logic here later
-      }
-    });
-  };  
-
-  const openBookingModal = (pkg) => {
-    setSelectedPackage(pkg);
-    setShowBookingModal(true);
-  };
-
-  const renderStars = (rating) => {
-    const fullStars = Math.floor(rating || 0);
-    const hasHalfStar = (rating || 0) % 1 !== 0;
-    const stars = [];
-
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(<span key={i} className="star full">★</span>);
-    }
-
-    if (hasHalfStar) {
-      stars.push(<span key="half" className="star half">★</span>);
-    }
-
-    const remainingStars = 5 - Math.ceil(rating || 0);
-    for (let i = 0; i < remainingStars; i++) {
-      stars.push(<span key={`empty-${i}`} className="star empty">★</span>);
-    }
-
-    return stars;
-  };
+  }, [packages, searchTerm, locationFilter, maxPrice, sortBy]);
 
   const calculateDiscount = (original, offer) => {
-    if (!original || !offer) return 0;
+    if (!original || !offer || original <= offer) return null;
     return Math.round(((original - offer) / original) * 100);
   };
-
-  const renderBookingModal = () => (
-    <div className="modal-overlay">
-      <div className="booking-modal">
-        <div className="modal-header">
-          <h3>Book Your Trip</h3>
-          <button className="close-btn" onClick={() => setShowBookingModal(false)}>×</button>
-        </div>
-
-        <div className="booking-content">
-          <div className="package-summary">
-            <img src={selectedPackage?.image} alt={selectedPackage?.title} />
-            <div className="summary-details">
-              <h4>{selectedPackage?.title}</h4>
-              <p className="location"> {selectedPackage?.location}</p>
-              <p className="duration"> {selectedPackage?.duration}</p>
-              <div className="booking-price">
-  {selectedPackage?.offer < selectedPackage?.price ? (
-    <>
-      <span className="offer-price">${selectedPackage?.offer}</span>
-      <span className="original-price">${selectedPackage?.price}</span>
-    </>
-  ) : (
-    <span className="offer-price">${selectedPackage?.price}</span>
-  )}
-</div>
-
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <div className="client-packages-page">
       {/* Hero Section */}
-      <section className="hero-section">
-        <div className="hero-content">
-          <h1>Discover Your Next Adventure</h1>
-          <p>Explore our handpicked travel packages and create unforgettable memories</p>
-          <div className="hero-search">
+      <section className="packages-hero">
+        <div className="container text-center position-relative z-2">
+          <div className="hero-badge">
+            <i className="bi bi-compass-fill text-warning"></i> Ceylona Tour Packages
+          </div>
+          <h1 className="hero-title">Discover Your Next Extraordinary Adventure</h1>
+          <p className="hero-subtitle">
+            Immerse yourself in handpicked Sri Lankan itineraries with private chauffeurs, luxury boutique villas, and exclusive cultural access.
+          </p>
+          
+          <div className="glass-search-container">
+            <i className="bi bi-search text-muted ms-3 fs-5"></i>
             <input
               type="text"
-              placeholder="Search destinations, experiences..."
+              placeholder="Search destinations, villas, safari experiences..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
+              className="search-input-field"
             />
-            <button className="search-btn"></button>
+            <button className="search-btn-gradient" onClick={() => {}}>
+              <span>Search Tours</span> <i className="bi bi-arrow-right"></i>
+            </button>
           </div>
-        </div>
-        <div className="hero-image">
-          <img src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800" alt="Travel Hero" />
         </div>
       </section>
 
-      {/* Filters and Sort */}
-      <section className="filters-section">
-        <div className="filters-container">
-          <div className="results-count">
-            <span>{filteredPackages.length} packages found</span>
+      {/* Main Content Container */}
+      <div className="container filter-section">
+        <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+          {/* Region Pills */}
+          <div className="region-pills-scroll">
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                className={`region-pill ${locationFilter === cat.id ? 'active' : ''}`}
+                onClick={() => setLocationFilter(cat.id)}
+              >
+                <i className={`bi ${cat.icon}`}></i> {cat.label}
+              </button>
+            ))}
           </div>
-          <div className="sort-controls">
-            <label>Sort by:</label>
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-              <option value="price">Price (Low to High)</option>
-              <option value="rating">Rating (High to Low)</option>
+
+          {/* Sort Dropdown */}
+          <div className="d-flex align-items-center gap-2 align-self-end align-self-md-center">
+            <span className="text-muted small fw-bold text-uppercase whitespace-nowrap">Sort By:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="sort-select"
+            >
+              <option value="price_low">Price: Low to High</option>
+              <option value="price_high">Price: High to Low</option>
+              <option value="rating">Top Rated ⭐</option>
+              <option value="name">Package Title (A-Z)</option>
             </select>
           </div>
         </div>
-      </section>
 
-      {/* Packages Grid */}
-      <section className="packages-section">
-        <div className="packages-grid">
-          {filteredPackages.map(pkg => (
-            <div key={pkg.packageID} className="package-card">
-              <div className="package-image-container">
-                <img src={pkg.image || "https://via.placeholder.com/400x200"} alt={pkg.title} className="package-image" />
-                {pkg.offer < pkg.price && (
-                  <div className="discount-badge">
-                  {calculateDiscount(pkg.price, pkg.offer)}% OFF
-                    </div>
-                  )}
-                <div className="package-rating">
-                  <div className="stars">{renderStars(pkg.rating)}</div>
-                  <span className="rating-text">({pkg.reviews || 0} reviews)</span>
-                </div>
-              </div>
-
-              <div className="package-content">
-                <div className="package-header">
-                  <h3>{pkg.title}</h3>
-                  <p className="location"> {pkg.location || "Unknown"}</p>
-                </div>
-                <p className="description">{pkg.description}</p>
-
-                <div className="package-details">
-                  <div className="detail-item">
-                    <span className="icon">📅</span>
-                    <span>{pkg.duration || "N/A"}</span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="icon">⭐</span>
-                    <span>{pkg.rating || 0}/5</span>
-                  </div>
-                  {pkg.available !== undefined && (
-                    <div className="detail-item">
-                      <span className="icon">🎫</span>
-                      <span>{pkg.available} spots left</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="package-pricing">
-                  <div className="price-container">
-                    {pkg.offer < pkg.price ? (
-                      <>
-                        <span className="original-price">${pkg.price}</span>
-                        <span className="offer-price">${pkg.offer}</span>
-                      </>
-                    ) : (
-                      <span className="offer-price">${pkg.price}</span>
-                    )}
-                    <span className="price-note">per person</span>
-
-                  </div>
-                </div>
-
-                <div className="package-actions">
-                  <button 
-                    className={`book-now-btn ${pkg.available !== undefined && pkg.available <= 0 ? 'fully-booked' : ''}`}
-                    onClick={() => handleBooking(pkg)}
-                    disabled={pkg.available !== undefined && pkg.available <= 0}
-                  >
-                    {pkg.available !== undefined && pkg.available <= 0 ? 'Fully Booked' : 'Book Now'}
-                  </button>
-                </div>
-              </div>
+        {/* Loading Spinner */}
+        {loading ? (
+          <div className="py-5 text-center my-5">
+            <div className="spinner-border text-primary" style={{ width: '3.5rem', height: '3.5rem' }} role="status">
+              <span className="visually-hidden">Loading...</span>
             </div>
-          ))}
-        </div>
-      </section>
+            <h5 className="mt-3 fw-bold text-dark">Curating Luxury Itineraries...</h5>
+            <p className="text-muted">Connecting to live database availability</p>
+          </div>
+        ) : filteredPackages.length === 0 ? (
+          /* Empty State */
+          <div className="text-center py-5 my-5 bg-white rounded-4 shadow-sm border p-5">
+            <i className="bi bi-compass text-muted display-1 mb-3 d-block"></i>
+            <h3 className="fw-bold text-dark">No Tour Packages Found</h3>
+            <p className="text-muted max-w-md mx-auto mb-4">
+              We couldn't find any travel packages matching your search criteria "{searchTerm}". Try adjusting your filters or browsing all regions.
+            </p>
+            <button
+              className="btn btn-outline-primary rounded-pill px-4 fw-semibold"
+              onClick={() => { setSearchTerm(''); setLocationFilter('ALL'); }}
+            >
+              Reset All Filters
+            </button>
+          </div>
+        ) : (
+          /* Packages Grid */
+          <div className="packages-grid">
+            {filteredPackages.map((pkg) => {
+              const discount = calculateDiscount(pkg.price, pkg.offer);
+              const pkgId = pkg.packageID || pkg.id;
+              
+              return (
+                <div key={pkgId} className="tour-card">
+                  <div className="card-img-wrapper">
+                    <img
+                      src={pkg.image || "https://images.unsplash.com/photo-1546708973-b339540b5162?auto=format&fit=crop&w=800&q=80"}
+                      alt={pkg.title}
+                      className="card-img"
+                    />
+                    <div className="card-overlay-top">
+                      <span className="category-badge">
+                        <i className="bi bi-geo-alt-fill me-1 text-danger"></i>
+                        {pkg.category || pkg.location || "SRI LANKA"}
+                      </span>
+                      {discount && (
+                        <span className="discount-badge">
+                          {discount}% OFF
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-      {showBookingModal && renderBookingModal()}
+                  <div className="card-body-content">
+                    <div className="tour-meta">
+                      <span><i className="bi bi-clock me-1 text-primary"></i> {pkg.duration || "5 Days / 4 Nights"}</span>
+                      <div className="rating-stars">
+                        <i className="bi bi-star-fill"></i>
+                        <span className="text-dark fw-bold">{pkg.rating || "4.9"}</span>
+                        <span className="text-muted">({Math.floor((pkg.rating || 4.9) * 12)} reviews)</span>
+                      </div>
+                    </div>
+
+                    <h3 className="tour-title">{pkg.title}</h3>
+                    <p className="tour-desc">{pkg.description}</p>
+
+                    <div className="card-footer-action">
+                      <div className="price-section">
+                        <span className="price-label">Per Person Rate</span>
+                        <div className="price-values">
+                          <span className="offer-price">Rs {Number(pkg.offer || pkg.price).toLocaleString()}</span>
+                          {discount && (
+                            <span className="original-price">Rs {Number(pkg.price).toLocaleString()}</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => navigate(`/package-details/${pkgId}`)}
+                        className="btn-explore"
+                      >
+                        <span>Explore</span> <i className="bi bi-arrow-right-short fs-4"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

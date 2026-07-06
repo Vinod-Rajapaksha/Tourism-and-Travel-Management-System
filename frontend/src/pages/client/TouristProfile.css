@@ -1,0 +1,8 @@
+.profile-page-container {
+  color: #f8fafc;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.max-w-lg {
+  max-width: 600px;
+}

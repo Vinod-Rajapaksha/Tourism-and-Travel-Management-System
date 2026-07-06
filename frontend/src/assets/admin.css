@@ -25,11 +25,13 @@
   --breakpoint-md: 768px;
   --breakpoint-lg: 992px;
   --breakpoint-xl: 1200px;
-  --font-family-sans-serif: "Nunito", -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
+  --font-family-sans-serif:
+    "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
+  --font-family-monospace:
+    SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
 }
 
 *,
@@ -41,8 +43,7 @@
 html,
 body,
 #root {
-  height: 100%;
-  overflow: hidden;
+  min-height: 100%;
 }
 
 html {
@@ -67,9 +68,19 @@ section {
 
 body {
   margin: 0;
-  font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-    "Segoe UI Symbol", "Noto Color Emoji" !important;
+  font-family:
+    "Nunito",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif,
+    "Apple Color Emoji",
+    "Segoe UI Emoji",
+    "Segoe UI Symbol",
+    "Noto Color Emoji" !important;
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.5;
@@ -197,8 +208,9 @@ pre,
 code,
 kbd,
 samp {
-  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace;
+  font-family:
+    SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
   font-size: 1em;
 }
 
@@ -1943,7 +1955,9 @@ pre code {
   background-clip: padding-box;
   border: 1px solid #d1d3e2;
   border-radius: 0.35rem;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition:
+    border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2207,7 +2221,8 @@ textarea.form-control.is-valid {
 .custom-select.is-valid {
   border-color: #1cc88a;
   padding-right: calc(0.75em + 2.3125rem);
-  background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='4' height='5' viewBox='0 0 4 5'%3e%3cpath fill='%235a5c69' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e")
+  background:
+    url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='4' height='5' viewBox='0 0 4 5'%3e%3cpath fill='%235a5c69' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e")
       right 0.75rem center/8px 10px no-repeat,
     #fff
       url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3e%3cpath fill='%231cc88a' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e")
@@ -2340,7 +2355,8 @@ textarea.form-control.is-invalid {
 .custom-select.is-invalid {
   border-color: #e74a3b;
   padding-right: calc(0.75em + 2.3125rem);
-  background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='4' height='5' viewBox='0 0 4 5'%3e%3cpath fill='%235a5c69' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e")
+  background:
+    url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='4' height='5' viewBox='0 0 4 5'%3e%3cpath fill='%235a5c69' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e")
       right 0.75rem center/8px 10px no-repeat,
     #fff
       url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23e74a3b' viewBox='0 0 12 12'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23e74a3b' stroke='none'/%3e%3c/svg%3e")
@@ -2485,8 +2501,11 @@ textarea.form-control.is-invalid {
   font-size: 1rem;
   line-height: 1.5;
   border-radius: 0.35rem;
-  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
-    border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition:
+    color 0.15s ease-in-out,
+    background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
 }
 
 .Tbtn {
@@ -2505,8 +2524,11 @@ textarea.form-control.is-invalid {
   font-size: 1rem;
   line-height: 1.5;
   border-radius: 0.35rem;
-  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
-    border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition:
+    color 0.15s ease-in-out,
+    background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3972,8 +3994,11 @@ input[type="button"].btn-block {
   height: calc(1rem - 4px);
   background-color: #b7b9cc;
   border-radius: 0.5rem;
-  transition: transform 0.15s ease-in-out, background-color 0.15s ease-in-out,
-    border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition:
+    transform 0.15s ease-in-out,
+    background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -4146,15 +4171,21 @@ input[type="button"].btn-block {
 }
 
 .custom-range:focus::-webkit-slider-thumb {
-  box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+  box-shadow:
+    0 0 0 1px #fff,
+    0 0 0 0.2rem rgba(78, 115, 223, 0.25);
 }
 
 .custom-range:focus::-moz-range-thumb {
-  box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+  box-shadow:
+    0 0 0 1px #fff,
+    0 0 0 0.2rem rgba(78, 115, 223, 0.25);
 }
 
 .custom-range:focus::-ms-thumb {
-  box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+  box-shadow:
+    0 0 0 1px #fff,
+    0 0 0 0.2rem rgba(78, 115, 223, 0.25);
 }
 
 .custom-range::-moz-focus-outer {
@@ -4168,9 +4199,13 @@ input[type="button"].btn-block {
   background-color: #4e73df;
   border: 0;
   border-radius: 1rem;
-  -webkit-transition: background-color 0.15s ease-in-out,
-    border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out,
+  -webkit-transition:
+    background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
+  transition:
+    background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out,
     box-shadow 0.15s ease-in-out;
   -webkit-appearance: none;
   appearance: none;
@@ -4203,9 +4238,13 @@ input[type="button"].btn-block {
   background-color: #4e73df;
   border: 0;
   border-radius: 1rem;
-  -moz-transition: background-color 0.15s ease-in-out,
-    border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out,
+  -moz-transition:
+    background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
+  transition:
+    background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out,
     box-shadow 0.15s ease-in-out;
   -moz-appearance: none;
   appearance: none;
@@ -4241,9 +4280,13 @@ input[type="button"].btn-block {
   background-color: #4e73df;
   border: 0;
   border-radius: 1rem;
-  -ms-transition: background-color 0.15s ease-in-out,
-    border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out,
+  -ms-transition:
+    background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
+  transition:
+    background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out,
     box-shadow 0.15s ease-in-out;
   appearance: none;
 }
@@ -4303,7 +4346,9 @@ input[type="button"].btn-block {
 .custom-control-label::before,
 .custom-file-label,
 .custom-select {
-  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out,
+  transition:
+    background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out,
     box-shadow 0.15s ease-in-out;
 }
 
@@ -5205,8 +5250,11 @@ input[type="button"].btn-block {
   white-space: nowrap;
   vertical-align: baseline;
   border-radius: 0.35rem;
-  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
-    border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition:
+    color 0.15s ease-in-out,
+    background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -6249,9 +6297,19 @@ a.close.disabled {
   z-index: 1070;
   display: block;
   margin: 0;
-  font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-    "Segoe UI Symbol", "Noto Color Emoji";
+  font-family:
+    "Nunito",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif,
+    "Apple Color Emoji",
+    "Segoe UI Emoji",
+    "Segoe UI Symbol",
+    "Noto Color Emoji";
   font-style: normal;
   font-weight: 400;
   line-height: 1.5;
@@ -6376,9 +6434,19 @@ a.close.disabled {
   z-index: 1060;
   display: block;
   max-width: 276px;
-  font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-    "Segoe UI Symbol", "Noto Color Emoji";
+  font-family:
+    "Nunito",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif,
+    "Apple Color Emoji",
+    "Segoe UI Emoji",
+    "Segoe UI Symbol",
+    "Noto Color Emoji";
   font-style: normal;
   font-weight: 400;
   line-height: 1.5;
@@ -9908,8 +9976,9 @@ button.bg-dark:focus {
 }
 
 .text-monospace {
-  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace !important;
+  font-family:
+    SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace !important;
 }
 
 .text-justify {
@@ -10234,7 +10303,7 @@ html {
 }
 
 body {
-  height: 100%;
+  min-height: 100%;
 }
 
 a:focus {
@@ -10325,9 +10394,11 @@ a:focus {
   animation-name: growIn;
   -webkit-animation-duration: 200ms;
   animation-duration: 200ms;
-  -webkit-animation-timing-function: transform cubic-bezier(0.18, 1.25, 0.4, 1),
+  -webkit-animation-timing-function:
+    transform cubic-bezier(0.18, 1.25, 0.4, 1),
     opacity cubic-bezier(0, 1, 0.4, 1);
-  animation-timing-function: transform cubic-bezier(0.18, 1.25, 0.4, 1),
+  animation-timing-function:
+    transform cubic-bezier(0.18, 1.25, 0.4, 1),
     opacity cubic-bezier(0, 1, 0.4, 1);
 }
 
@@ -11936,7 +12007,6 @@ body.sidebar-toggled footer.sticky-footer {
   position: sticky;
   top: 0;
   transition: all 0.3s;
-
 }
 
 .scrollable::-webkit-scrollbar {

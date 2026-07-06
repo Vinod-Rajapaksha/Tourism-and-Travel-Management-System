@@ -27,22 +27,24 @@ public class SecurityConfig {
                 .cors(c -> {
                 })
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/error").permitAll()
 
-                        .requestMatchers("/api/manager/dashboard/**").hasRole("GENERAL_MANAGER")
-                        .requestMatchers("/api/consultant/**").hasRole("SENIOR_TRAVEL_CONSULTANT")
-                        .requestMatchers("/api/customer-service/**").hasRole("CUSTOMER_SERVICE_EXECUTIVE")
-                        .requestMatchers("/api/marketing/**").hasRole("MARKETING_MANAGER")
+                        .requestMatchers("/api/manager/dashboard/**").hasAnyRole("GENERAL_MANAGER", "ADMIN")
+                        .requestMatchers("/api/consultant/**").hasAnyRole("SENIOR_TRAVEL_CONSULTANT", "ADMIN")
+                        .requestMatchers("/api/customer-service/**").hasAnyRole("CUSTOMER_SERVICE_EXECUTIVE", "ADMIN")
+                        .requestMatchers("/api/marketing/**").hasAnyRole("MARKETING_MANAGER", "ADMIN")
 
                         .requestMatchers("/api/admin/**").hasAnyRole(
                                 "GENERAL_MANAGER",
                                 "SENIOR_TRAVEL_CONSULTANT",
                                 "CUSTOMER_SERVICE_EXECUTIVE",
-                                "MARKETING_MANAGER")
+                                "MARKETING_MANAGER",
+                                "ADMIN")
 
-                        .requestMatchers("/api/clients/**").hasRole("GENERAL_MANAGER")
+                        .requestMatchers("/api/clients/**")
+                        .hasAnyRole("GENERAL_MANAGER", "TOURIST", "CUSTOMER_SERVICE_EXECUTIVE", "ADMIN")
 
-                        .requestMatchers("/api/adminmanagement/**").hasRole("GENERAL_MANAGER")
+                        .requestMatchers("/api/adminmanagement/**").hasAnyRole("GENERAL_MANAGER", "ADMIN")
 
                         .requestMatchers("/api/promotions/**").permitAll()
 
@@ -50,7 +52,8 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/guides/**").permitAll()
 
-                        .requestMatchers("/api/reservations/**").hasRole("CUSTOMER_SERVICE_EXECUTIVE")
+                        .requestMatchers("/api/reservations/**")
+                        .hasAnyRole("CUSTOMER_SERVICE_EXECUTIVE", "TOURIST", "GUIDE", "GENERAL_MANAGER")
 
                         .requestMatchers("/api/availability/**").permitAll()
 

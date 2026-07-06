@@ -1,0 +1,51 @@
+.tourist-portal-wrapper {
+  min-height: 100vh;
+  background-color: #0f172a;
+  color: #f8fafc;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+.hover-text-warning:hover {
+  color: #f59e0b !important;
+}
+
+.hover-text-white:hover {
+  color: #ffffff !important;
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+.transition-all {
+  transition: all 0.2s ease-in-out;
+}
+
+.backdrop-blur {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.navbar-nav .nav-link.active {
+  color: #f59e0b !important;
+  font-weight: 700;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}

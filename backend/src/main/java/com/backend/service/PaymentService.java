@@ -30,19 +30,16 @@ public class PaymentService {
     @Autowired
     private ClientRepository clientRepository;
 
-    // Strategy Pattern Interface
     public interface PaymentStrategy {
         boolean processPayment(BigDecimal amount);
 
         String getStrategyName();
     }
 
-    // Concrete Strategies - FIXED: Made static
     public static class CreditCardPayment implements PaymentStrategy {
         @Override
         public boolean processPayment(BigDecimal amount) {
             System.out.println("Processing credit card payment of LKR " + amount);
-            // Simulate credit card processing with 85% success rate
             boolean success = Math.random() < 0.85;
             System.out.println("Credit Card Payment " + (success ? "SUCCESSFUL" : "FAILED"));
             return success;
@@ -58,7 +55,6 @@ public class PaymentService {
         @Override
         public boolean processPayment(BigDecimal amount) {
             System.out.println("Processing bank transfer of LKR " + amount);
-            // Simulate bank transfer with 95% success rate
             boolean success = Math.random() < 0.95;
             System.out.println("Bank Transfer " + (success ? "SUCCESSFUL" : "FAILED"));
             return success;
@@ -74,7 +70,6 @@ public class PaymentService {
         @Override
         public boolean processPayment(BigDecimal amount) {
             System.out.println("Processing digital wallet payment of LKR " + amount);
-            // Simulate digital wallet with 90% success rate
             boolean success = Math.random() < 0.90;
             System.out.println("Digital Wallet Payment " + (success ? "SUCCESSFUL" : "FAILED"));
             return success;
@@ -90,7 +85,6 @@ public class PaymentService {
         @Override
         public boolean processPayment(BigDecimal amount) {
             System.out.println("Processing cash payment of LKR " + amount);
-            // Cash payments are always successful
             System.out.println("Cash Payment SUCCESSFUL");
             return true;
         }
@@ -101,7 +95,6 @@ public class PaymentService {
         }
     }
 
-    // Payment Context - FIXED: Made static
     public static class PaymentContext {
         private PaymentStrategy strategy;
 
@@ -123,7 +116,6 @@ public class PaymentService {
         }
     }
 
-    // Convert Entity → DTO
     private PaymentDTO convertToDTO(Payment payment) {
         PaymentDTO dto = new PaymentDTO();
         dto.setPaymentId(payment.getPaymentID());
@@ -150,7 +142,6 @@ public class PaymentService {
         return dto;
     }
 
-    // Convert DTO → Entity
     private Payment convertToEntity(PaymentDTO dto) {
         Payment payment = new Payment();
 
@@ -179,7 +170,6 @@ public class PaymentService {
         return payment;
     }
 
-    // --- CRUD Operations ---
     public PaymentDTO createPayment(PaymentDTO paymentDTO) {
         if (paymentDTO.getPaymentDate() == null) {
             paymentDTO.setPaymentDate(LocalDateTime.now());
@@ -273,7 +263,6 @@ public class PaymentService {
         return false;
     }
 
-    // --- Payment Processing ---
     public PaymentDTO processPayment(PaymentDTO paymentDTO) {
         paymentDTO.setStatus(PaymentStatus.PENDING);
         PaymentDTO createdPayment = createPayment(paymentDTO);
@@ -292,7 +281,6 @@ public class PaymentService {
         return Math.random() < 0.9;
     }
 
-    // --- Reports ---
     public BigDecimal getTotalConfirmedAmount() {
         return paymentRepository.getTotalSuccessAmount();
     }

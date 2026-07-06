@@ -27,11 +27,15 @@ export default function BaseLayout() {
 
   useEffect(() => {
     document.body.style.overflow = sidebarMobileOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [sidebarMobileOpen]);
 
   useEffect(() => {
-    const onKey = (e) => { if (e.key === "Escape") setSidebarMobileOpen(false); };
+    const onKey = (e) => {
+      if (e.key === "Escape") setSidebarMobileOpen(false);
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
@@ -61,10 +65,7 @@ export default function BaseLayout() {
         aria-label="Primary"
         aria-expanded={!sidebarCollapsed}
       >
-        <SideNav
-          toggled={sidebarCollapsed}
-          onItemClick={null}
-        />
+        <SideNav toggled={sidebarCollapsed} onItemClick={null} />
       </nav>
 
       {/* Mobile sidebar */}
@@ -91,7 +92,7 @@ export default function BaseLayout() {
         <TopNav
           userName={userName}
           onToggleSidebar={toggleSidebar}
-          onLogout={() => window.location.assign("/logout")}
+          onLogout={() => window.location.assign("/staff/logout")}
         />
         <main className="p-3 flex-grow-1 scrollable">
           <Outlet />
