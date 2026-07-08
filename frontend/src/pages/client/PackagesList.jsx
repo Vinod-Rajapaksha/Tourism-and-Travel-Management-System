@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import './ClientPackagesPage.css';
-import axios from 'axios';
+import api from '../../services/api';
 import Swal from 'sweetalert2';
 
 const ClientPackagesPage = () => {
@@ -17,14 +17,14 @@ const ClientPackagesPage = () => {
   // 🔹 Fetch packages from backend
   useEffect(() => {
     setLoading(true);
-    axios.get("http://localhost:8080/api/packages/with-availability")
+    api.get("/packages/with-availability")
       .then((res) => {
         const activePkgs = res.data.filter(pkg => pkg.status === "ACTIVE" || !pkg.status);
         setPackages(activePkgs);
       })
       .catch((err) => {
         console.error("Error fetching packages:", err);
-        axios.get("http://localhost:8080/api/packages")
+            api.get("/packages")
           .then((res) => {
             const activePkgs = res.data.filter(pkg => pkg.status === "ACTIVE" || !pkg.status);
             setPackages(activePkgs);

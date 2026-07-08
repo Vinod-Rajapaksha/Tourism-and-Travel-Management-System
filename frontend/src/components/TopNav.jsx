@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import api from "../services/api";
 import Swal from "sweetalert2";
 import "../assets/admin.css";
 import profileSvg from "../assets/img/undraw_profile.svg";
@@ -48,12 +48,8 @@ const Topbar = ({ userName, onToggleSidebar, onLogout, rightItems }) => {
   // Fetch profile data once
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const API_BASE = "http://localhost:8080";
-
-    if (!token || !API_BASE) return;
-
-    axios
-      .get(`${API_BASE}/api/admin/profile`, {
+    api
+      .get(`/admin/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => setProfile(res.data))

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const api = axios.create({ baseURL: process.env.REACT_APP_API_BASE_URL || "http://localhost:8080/api" });
+const api = axios.create({ baseURL: process.env.REACT_APP_API_BASE_URL });
 
 // attach token
 api.interceptors.request.use((config) => {
@@ -26,7 +26,7 @@ api.interceptors.response.use(
         try {
           const refreshToken = localStorage.getItem("refreshToken");
           const { data } = await axios.post(
-            (process.env.REACT_APP_API_BASE_URL || "http://localhost:8080/api") + "/auth/refresh",
+            (process.env.REACT_APP_API_BASE_URL) + "/auth/refresh",
             { refreshToken }
           );
           localStorage.setItem("token", data.accessToken);

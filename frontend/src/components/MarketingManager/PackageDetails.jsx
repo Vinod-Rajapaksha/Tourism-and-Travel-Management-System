@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import axios from "axios";
+import api from "../../services/api";
 import Swal from "sweetalert2";
 import "./PackageDetails.css";
 
@@ -28,8 +28,8 @@ export default function PackageDetails() {
 
   useEffect(() => {
     setLoading(true);
-    axios
-      .get(`http://localhost:8080/api/packages/${packageId}`)
+    api
+      .get(`/packages/${packageId}`)
       .then((res) => setPkg(res.data))
       .catch((err) => {
         console.error("Error fetching package details:", err);
@@ -50,8 +50,8 @@ export default function PackageDetails() {
       })
       .finally(() => setLoading(false));
 
-    axios
-      .get("http://localhost:8080/api/guides")
+    api
+      .get("/guides")
       .then((res) => {
         const activeGuides = res.data.filter(
           (g) => g.status === "ACTIVE" || g.status === "AVAILABLE" || !g.status,

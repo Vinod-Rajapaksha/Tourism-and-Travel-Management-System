@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import axios from "axios";
+import api from "../../services/api";
 import Swal from "sweetalert2";
 import jsPDF from "jspdf";
 import "./PaymentGateway.css";
@@ -82,8 +82,8 @@ export default function PaymentGateway() {
         specialRequests: `VIP Booking • Paid via ${activeTab.toUpperCase()}`,
       };
 
-      const response = await axios.post(
-        "http://localhost:8080/api/reservations",
+      const response = await api.post(
+        "/reservations",
         payload,
       );
       const reservationData = response.data;

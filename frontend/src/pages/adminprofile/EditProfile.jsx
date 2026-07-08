@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
+import api from "../../services/api";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-
-const API_BASE = "http://localhost:8080";
 
 export default function EditProfile() {
   const [profile, setProfile] = useState(null);
@@ -33,7 +32,7 @@ export default function EditProfile() {
         return;
       }
       try {
-        const res = await axios.get(`${API_BASE}/api/admin/profile`, {
+        const res = await api.get(`/admin/profile`, {
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal,
         });
@@ -114,7 +113,7 @@ export default function EditProfile() {
       };
       if (formData.password) payload.password = formData.password;
 
-      await axios.put(`${API_BASE}/api/admin/profile`, payload, {
+      await api.put(`/admin/profile`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       await Swal.fire("Updated!", "Your profile information has been saved successfully.", "success");

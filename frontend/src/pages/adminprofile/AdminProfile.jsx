@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../services/api";
 import Swal from "sweetalert2";
 import "bootstrap/dist/css/bootstrap.min.css";
-
-const API_BASE = "http://localhost:8080";
 
 // Modern Avatar Component
 const ProfileAvatar = ({ name, role }) => {
@@ -53,8 +51,8 @@ export default function AdminProfile() {
       return;
     }
 
-    axios
-      .get(`${API_BASE}/api/admin/profile`, {
+    api
+      .get(`/admin/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => setProfile(res.data))
@@ -81,8 +79,8 @@ export default function AdminProfile() {
       if (!result.isConfirmed) return;
 
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      axios
-        .delete(`${API_BASE}/api/admin/profile`, {
+      api
+        .delete(`/admin/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then(() => {
