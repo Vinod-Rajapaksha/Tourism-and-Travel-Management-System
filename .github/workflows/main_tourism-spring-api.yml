@@ -34,7 +34,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: java-app
-          path: '${{ github.workspace }}/backend/target/*.jar'
+          path: backend/target/*.jar
 
   deploy:
     runs-on: ubuntu-latest
